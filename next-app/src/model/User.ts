@@ -4,10 +4,10 @@ export interface User extends Document {
   username: string;
   email: string;
   password: string | null;
+  phoneNumber: string;
   verifyCode: string | null;
   verifyCodeExpireAt: Date | null;
   isVerified: boolean;
-  isAcceptingMessages: boolean;
   _id: string;
   googleId: string;
 }
@@ -28,6 +28,9 @@ const UserSchema: Schema<User> = new Schema({
       "Please fill a valid email address",
     ],
   },
+  phoneNumber: {
+    type: String,
+  },
   password: {
     type: String,
     default: null,
@@ -47,10 +50,6 @@ const UserSchema: Schema<User> = new Schema({
   isVerified: {
     type: Boolean,
     default: false,
-  },
-  isAcceptingMessages: {
-    type: Boolean,
-    default: true,
   },
 });
 

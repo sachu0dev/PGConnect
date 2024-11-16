@@ -12,7 +12,7 @@ import Autoplay from "embla-carousel-autoplay";
 
 const About = () => {
   return (
-    <div className="w-full py-14">
+    <>
       <Carousel
         opts={{
           align: "start",
@@ -171,31 +171,33 @@ const About = () => {
           </CarouselItem>
         </CarouselContent>
       </Carousel>
-      <div className="flex justify-evenly space-x-10 mx-12 flex-col md:flex-row md:mx-44 lg:mx-72  mt-12">
-        <div className="flex-1">
-          <h1 className="text-[#014073] text-3xl mb-4 font-medium">
-            About PGConnect
-          </h1>
-          <div className="w-[80px] bg-[#019fe9] h-[4px] mb-4"></div>
-          <p className="text-lg">
-            We, at Book My PG, are India's fastest-growing network of managed
-            Paying Guest (PG) rentals. We hope to provide you with the best
-            renting solutions with the help of our designs and technology.Our
-            services across the country will help you find and book Paying Guest
-            (PG) rental homes.
-          </p>
-        </div>
-        <div className="flex-1">
-          <Image
-            src="/assets/about.png"
-            alt="logo"
-            width={500}
-            height={500}
-            className=""
-          />
+      <div className="flex justify-center items-center h-full">
+        <div className="flex justify-evenly space-x-10 mx-12 flex-col md:flex-row md:mx-44 lg:mx-72  mt-12">
+          <div className="flex-1">
+            <h1 className="text-[#014073] text-3xl mb-4 font-medium">
+              About PGConnect
+            </h1>
+            <div className="w-[80px] bg-[#019fe9] h-[4px] mb-4"></div>
+            <p className="text-lg">
+              We, at Book My PG, are India's fastest-growing network of managed
+              Paying Guest (PG) rentals. We hope to provide you with the best
+              renting solutions with the help of our designs and technology.Our
+              services across the country will help you find and book Paying
+              Guest (PG) rental homes.
+            </p>
+          </div>
+          <div className="flex-1">
+            <Image
+              src="/assets/about.png"
+              alt="logo"
+              width={500}
+              height={500}
+              className=""
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -1,41 +1,48 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { generateAccessToken, generateRefreshToken } from "@/lib/jwt";
-import { setCookie } from "cookies-next";
+import { cookies } from "next/headers";
+import dbConnect from "@/lib/dbConnect";
+import UserModel, { User } from "@/model/User";
 
-interface User {
-  _id: string;
-  email: string;
-  password: string;
-}
-
-// Mock function to fetch user from DB (Replace with actual DB query)
 const getUserByEmail = async (email: string): Promise<User | null> => {
-  // Implement DB query here
-  return null;
+  await dbConnect();
+  const user = await UserModel.findOne({ email });
+  return user;
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const { email, password } = req.body;
+export async function POST(req: NextRequest) {
+  try {
+    const { email, password } = await req.json();
+    const user = await getUserByEmail(email);
 
-  const user = await getUserByEmail(email);
+    if (
+      !user ||
+      !user.password ||
+      !(await bcrypt.compare(password, user.password))
+    ) {
+      return NextResponse.json(
+        { message: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
 
-  if (!user || !bcrypt.compareSync(password, user.password)) {
-    return res.status(401).json({ message: "Invalid credentials" });
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    const cookieStore = await cookies();
+    cookieStore.set("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
+
+    return NextResponse.json({ accessToken }, { status: 200 });
+  } catch (error) {
+    console.error("Login Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
-
-  const accessToken = generateAccessToken(user._id);
-  const refreshToken = generateRefreshToken(user._id);
-
-  setCookie("refreshToken", refreshToken, {
-    req,
-    res,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  });
-
-  return res.status(200).json({ accessToken });
 }

@@ -28,7 +28,10 @@ const page = () => {
           height={500}
         />
       </section>
-      <section className="min-h-screen w-full flex flex-col justify-between ">
+      <section className="min-h-screen w-full flex flex-col justify-evenly ">
+        <About />
+      </section>
+      <section className="min-h-screen w-full flex flex-col items-center ">
         <About />
       </section>
     </div>

@@ -1,51 +1,55 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server";
 import {
   verifyRefreshToken,
   generateAccessToken,
   generateRefreshToken,
 } from "@/lib/jwt";
-import { getCookie, setCookie } from "cookies-next";
-
-interface User {
-  _id: string;
-}
+import { cookies } from "next/headers"; // For working with cookies in App Router
+import dbConnect from "@/lib/dbConnect";
+import UserModel from "@/model/User";
 
 // Mock function to fetch user from DB
-const getUserById = async (userId: string): Promise<User | null> => {
-  // Implement DB query here
-  return null;
+const getUserById = async (userId: string) => {
+  await dbConnect();
+  const user = await UserModel.findById(userId);
+  return user;
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const refreshToken = getCookie("refreshToken", { req, res });
+export async function POST() {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refreshToken");
 
   if (!refreshToken) {
-    return res.status(401).json({ message: "No refresh token found" });
+    return NextResponse.json(
+      { message: "No refresh token found" },
+      { status: 401 }
+    );
   }
 
   try {
-    const { userId } = verifyRefreshToken(refreshToken as string);
+    const { userId } = verifyRefreshToken(refreshToken.value);
     const user = await getUserById(userId);
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     const newAccessToken = generateAccessToken(user._id);
     const newRefreshToken = generateRefreshToken(user._id);
 
-    setCookie("refreshToken", newRefreshToken, {
-      req,
-      res,
+    // Set new refresh token in cookies
+    const response = NextResponse.json({ accessToken: newAccessToken });
+    response.cookies.set("refreshToken", newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production", // Set secure flag for production
+      path: "/",
     });
 
-    return res.status(200).json({ accessToken: newAccessToken });
+    return response;
   } catch (error) {
-    return res.status(401).json({ message: "Invalid refresh token" });
+    return NextResponse.json(
+      { message: "Invalid refresh token" },
+      { status: 401 }
+    );
   }
 }
