@@ -34,7 +34,7 @@ export default function useAuth() {
 
   const refreshAccessToken = async () => {
     try {
-      const { data } = await axios.post("/api/auth/refresh");
+      const { data } = await axios.post("/api/api/auth/refresh");
       setAccessToken(data.accessToken);
     } catch (error) {
       console.error("Error refreshing access token:", error);

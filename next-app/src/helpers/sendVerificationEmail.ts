@@ -1,4 +1,4 @@
-import { resend } from "@/lib/resend";
+import { resend } from "@/lib/auth/resend";
 import VerificationEmail from "../../email/VerificationEmail";
 
 export async function sendVerificationEmail(

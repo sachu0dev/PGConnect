@@ -1,11 +1,12 @@
 import dbConnect from "@/lib/dbConnect";
+import prisma from "@/lib/prisma";
 import UserModel from "@/model/User";
 
 export async function POST(request: Request) {
   await dbConnect();
   try {
     const { username, code } = await request.json();
-    const user = await UserModel.findOne({ username });
+    const user = await prisma.user.findUnique({ where: { username } });
     if (!user) {
       return Response.json(
         { success: false, message: "User not found" },
@@ -47,8 +48,14 @@ export async function POST(request: Request) {
       );
     }
 
-    user.isVerified = true;
-    await user.save();
+    const updatedUser = await prisma.user.update({
+      where: { username },
+      data: {
+        isVerified: true,
+        verifyCode: null,
+        verifyCodeExpireAt: null,
+      },
+    });
     return Response.json(
       { success: true, message: "User verified successfully" },
       { status: 200 }

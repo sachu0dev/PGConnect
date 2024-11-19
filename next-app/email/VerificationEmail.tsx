@@ -33,9 +33,7 @@ export default function VerificationEmail({
             style={logo}
           />
           <Text style={tertiary}>Verify Your Identity</Text>
-          <Heading style={secondary}>
-            Welcome to Nameless Feedback, {username}
-          </Heading>
+          <Heading style={secondary}>Welcome to PGConnect, {username}</Heading>
           <Section style={codeContainer}>
             <Text style={code}>{otp}</Text>
           </Section>
@@ -48,7 +46,7 @@ export default function VerificationEmail({
             if you did not request this code.
           </Text>
         </Container>
-        <Text style={footer}>Securely powered by nameless.</Text>
+        <Text style={footer}>Securely powered by PGConnect.</Text>
       </Body>
     </Html>
   );

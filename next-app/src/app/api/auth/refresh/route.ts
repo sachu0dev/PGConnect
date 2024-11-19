@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
+
+import { cookies } from "next/headers";
+import prisma from "@/lib/prisma";
 import {
-  verifyRefreshToken,
   generateAccessToken,
   generateRefreshToken,
-} from "@/lib/jwt";
-import { cookies } from "next/headers"; // For working with cookies in App Router
-import dbConnect from "@/lib/dbConnect";
-import UserModel from "@/model/User";
+  verifyRefreshToken,
+} from "@/lib/auth/jwt";
 
-// Mock function to fetch user from DB
 const getUserById = async (userId: string) => {
-  await dbConnect();
-  const user = await UserModel.findById(userId);
+  const user = await prisma.user.findUnique({ where: { id: userId } });
   return user;
 };
 
@@ -34,14 +32,13 @@ export async function POST() {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    const newAccessToken = generateAccessToken(user._id);
-    const newRefreshToken = generateRefreshToken(user._id);
+    const newAccessToken = generateAccessToken(user.id);
+    const newRefreshToken = generateRefreshToken(user.id);
 
-    // Set new refresh token in cookies
     const response = NextResponse.json({ accessToken: newAccessToken });
     response.cookies.set("refreshToken", newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Set secure flag for production
+      secure: process.env.NODE_ENV === "production",
       path: "/",
     });
 

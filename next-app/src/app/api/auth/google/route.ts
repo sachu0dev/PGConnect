@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
-import { generateAccessToken, generateRefreshToken } from "@/lib/jwt";
+import { generateAccessToken, generateRefreshToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
+import prisma from "@/lib/prisma";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -19,11 +20,24 @@ export async function POST(req: NextRequest) {
     const email = payload?.email;
     const name = payload?.name;
 
-    // Replace with actual DB query
-    const user = await findOrCreateUser({ googleId, email, name });
+    let user = await prisma.user.findUnique({
+      where: {
+        googleId,
+      },
+    });
 
-    const accessToken = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          username: name,
+          email,
+          googleId,
+        },
+      });
+    }
+
+    const accessToken = generateAccessToken(user.id);
+    const refreshToken = generateRefreshToken(user.id);
 
     // Set the refresh token as an HTTP-only cookie
     cookies().set("refreshToken", refreshToken, {

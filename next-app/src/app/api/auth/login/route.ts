@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { generateAccessToken, generateRefreshToken } from "@/lib/jwt";
+import { generateAccessToken, generateRefreshToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
-import dbConnect from "@/lib/dbConnect";
-import UserModel, { User } from "@/model/User";
+import prisma from "@/lib/prisma";
 
-const getUserByEmail = async (email: string): Promise<User | null> => {
-  await dbConnect();
-  const user = await UserModel.findOne({ email });
+const getUserByEmail = async (email: string) => {
+  const user = await prisma.user.findUnique({ where: { email } });
   return user;
 };
 
@@ -27,8 +25,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const accessToken = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
+    const accessToken = generateAccessToken(user.id);
+    const refreshToken = generateRefreshToken(user.id);
 
     const cookieStore = await cookies();
     cookieStore.set("refreshToken", refreshToken, {

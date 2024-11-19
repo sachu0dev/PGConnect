@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  username           String    @unique
+  email              String    @unique
+  password           String?
+  phoneNumber        String?
+  verifyCode         String?
+  verifyCodeExpireAt DateTime?
+  isVerified         Boolean   @default(false)
+  googleId           String?   @unique
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  pgOwner   PgOwner? @relation(fields: [pgOwnerId], references: [id])
+  pgOwnerId String?
+}
+
+model PgOwner {
+  id                 String    @id @default(uuid())
+  username           String    @unique
+  email              String    @unique
+  phoneNumber        String
+  password           String?
+  verifyCode         String?
+  verifyCodeExpireAt DateTime?
+  isVerified         Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  pgs  Pg[]
+  User User[]
+}
+
+model Pg {
+  id               String   @id @default(uuid())
+  name             String
+  contact          String?
+  city             String
+  address          String?
+  rentPerMonth     Float?
+  isDummy          Boolean  @default(false)
+  isAcceptingGuest Boolean  @default(true)
+  gender           Gender
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  owner   PgOwner @relation(fields: [ownerId], references: [id])
+  ownerId String
+
+  coordinates Coordinates?
+}
+
+model Coordinates {
+  id   String @id @default(uuid())
+  long String
+  lat  String
+  pgId String @unique
+  pg   Pg     @relation(fields: [pgId], references: [id])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  BOTH
+}
