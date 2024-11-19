@@ -1,6 +1,7 @@
 import axios from "axios";
 import { store } from "@/lib/store";
 import { refreshUser, logout } from "@/lib/features/user/userSlice";
+import { access } from "fs";
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
@@ -10,7 +11,11 @@ const api = axios.create({
   withCredentials: true,
 });
 
-const getAccessToken = () => store.getState().user.accessToken;
+const getAccessToken = () => {
+  const accessToken = store.getState().user.accessToken;
+
+  return accessToken;
+};
 
 const onTokenRefreshed = (newToken: string) => {
   refreshSubscribers.forEach((callback) => callback(newToken));
@@ -23,13 +28,14 @@ const subscribeTokenRefresh = (callback: (token: string) => void) => {
 
 api.interceptors.request.use((config) => {
   const accessToken = getAccessToken();
+  console.log(accessToken);
+
   if (accessToken && config.headers) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
   return config;
 });
 
-// Response Interceptor
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -67,7 +73,9 @@ api.interceptors.response.use(
 
         if (
           typeof window !== "undefined" &&
-          window.location.pathname !== "/login"
+          window.location.pathname !== "/login" &&
+          window.location.pathname !== "/register" &&
+          window.location.pathname !== "/"
         ) {
           window.location.href = "/login";
         }

@@ -7,6 +7,7 @@ import { useDispatch } from "react-redux";
 import { loginUser } from "@/lib/auth/authAction";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import GoogleButton from "@/components/specific/GoogleButton";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
@@ -19,7 +20,6 @@ const LoginPage = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
 
     try {
       // Dispatch the loginUser action
@@ -78,11 +78,16 @@ const LoginPage = () => {
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
+          <div>
+            <h2>Choose your account type</h2>
+            <GoogleButton userType="user" />
+            <GoogleButton userType="pgOwner" />
+          </div>
         </div>
 
         {/* Image Section */}
-        <div className="bg-transparent flex-1 md:p-4">
-          <div className="rounded-xl md:rounded-r-none overflow-hidden relative shadow-lg h-[300px] md:h-full">
+        <div className="bg-transparent flex-1 md:py-4 ">
+          <div className="rounded-xl md:rounded-l-none overflow-hidden relative shadow-lg h-[300px] md:h-full">
             <Image
               src="/assets/room.jpg"
               alt="Room"

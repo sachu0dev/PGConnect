@@ -1,66 +1,61 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-
-export default function useAuth() {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      const { data } = await axios.post("/api/auth/login", { email, password });
-      setAccessToken(data.accessToken);
-    } catch (error) {
-      console.error("Login failed:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Google login function
-  const googleLogin = async (token: string) => {
-    setLoading(true);
-    try {
-      const { data } = await axios.post("/api/auth/google", { token });
-      setAccessToken(data.accessToken);
-      // Store the access token in localStorage (optional)
-      localStorage.setItem("accessToken", data.accessToken);
-    } catch (error) {
-      console.error("Google login failed:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refreshAccessToken = async () => {
-    try {
-      const { data } = await axios.post("/api/api/auth/refresh");
-      setAccessToken(data.accessToken);
-    } catch (error) {
-      console.error("Error refreshing access token:", error);
-      setAccessToken(null);
-      localStorage.removeItem("accessToken"); // Remove the token if refresh fails
-    }
-  };
-
-  // Check if there's a valid token in localStorage and set it on initial load
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      setAccessToken(token);
-    }
-  }, []);
-
-  // Periodically refresh the access token every 14 minutes (840,000 milliseconds)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (accessToken) {
-        refreshAccessToken();
-      }
-    }, 14 * 60 * 1000);
-
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, [accessToken]);
-
-  return { accessToken, login, googleLogin, refreshAccessToken, loading };
+interface GoogleUser {
+  googleId: string;
+  email: string;
+  username: string;
 }
+
+interface AuthResponse {
+  accessToken: string;
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    isPgOwner: boolean;
+  };
+}
+
+import { useState } from "react";
+
+const useAuth = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const googleLogin = async (tokenId: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: tokenId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Login failed");
+      }
+
+      const data: AuthResponse = await response.json();
+
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem(
+        "userType",
+        data.user.isPgOwner ? "pgOwner" : "user"
+      );
+
+      window.location.href = data.user.isPgOwner
+        ? "/owner/dashboard"
+        : "/dashboard";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Authentication failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { googleLogin, isLoading, error };
+};
+
+export default useAuth;

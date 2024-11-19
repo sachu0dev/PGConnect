@@ -1,24 +1,34 @@
-import { GoogleLogin } from "react-google-login";
-import useAuth from "@/hooks/useAuth";
+import useAuth from "@/hooks/userAuth";
+import { GoogleLogin } from "@react-oauth/google";
+import { CredentialResponse } from "@react-oauth/google";
 
-export default function GoogleButton() {
-  const { googleLogin } = useAuth();
+interface GoogleButtonProps {
+  userType?: "user" | "pgOwner";
+}
 
-  const onSuccess = (response: any) => {
-    googleLogin(response.tokenId);
-  };
+export default function GoogleButton({ userType = "user" }: GoogleButtonProps) {
+  const { googleLogin, isLoading, error } = useAuth();
 
-  const onFailure = (error: any) => {
-    console.error("Google login failed", error);
+  const onSuccess = (credentialResponse: CredentialResponse) => {
+    if (credentialResponse.credential) {
+      googleLogin(credentialResponse.credential, userType);
+    }
   };
 
   return (
-    <GoogleLogin
-      clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}
-      buttonText="Login with Google"
-      onSuccess={onSuccess}
-      onFailure={onFailure}
-      cookiePolicy="single_host_origin"
-    />
+    <div className="flex flex-col items-center gap-4">
+      <GoogleLogin
+        onSuccess={onSuccess}
+        onError={() => {
+          console.error("Login Failed");
+        }}
+        useOneTap
+        context={userType === "pgOwner" ? "sign up" : "signin"}
+        text={isLoading ? "logging_in" : "signin_with"}
+        shape="rectangular"
+        locale="en"
+      />
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+    </div>
   );
 }
