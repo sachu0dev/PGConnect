@@ -8,21 +8,15 @@ export const pgFormSchema = z.object({
   city: z.string().min(1, "City is required"),
   address: z.string().min(1, "Address is required"),
   rentPerMonth: z.number().min(1, "Rent per month must be at least 1"),
-  capacity: z
-    .string()
-    .regex(/^\d+$/, "Capacity must be a valid number")
-    .transform((value) => parseInt(value, 10)) // Transform into a number
-    .refine((value) => value >= 1, "Capacity must be at least 1"),
-  capacityCount: z
-    .string()
-    .regex(/^\d+$/, "Capacity count must be a valid number")
-    .transform((value) => parseInt(value, 10)) // Transform into a number
-    .refine((value) => value >= 0),
-  gender: z.enum(["male", "female", "any"]),
+  capacity: z.number().min(1, "Capacity must be at least 1"),
+  gender: z.enum(["MALE", "FEMALE", "ANY"]),
   isDummy: z.boolean(),
   coordinates: z.string().min(1, "Coordinates are required"),
   bhk: z.number().min(1, "BHK must be at least 1"),
-  description: z.string().optional(),
+  description: z
+    .string()
+    .min(1, "Description is required")
+    .max(200, "Description must be at most 200 characters"),
   isAcceptingGuest: z.boolean(),
   images: z
     .array(z.string())

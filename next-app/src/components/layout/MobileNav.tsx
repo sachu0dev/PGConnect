@@ -26,7 +26,7 @@ const MobileNav = () => {
     <div className="flex justify-center relative">
       {isNavMenuOpen && (
         <motion.div
-          className="absolute w-full max-w-[500px] mx-4 bg-white flex flex-col text-black shadow-md md:hidden"
+          className="absolute z-10 w-full max-w-[500px] mx-4 bg-white flex flex-col text-black shadow-md md:hidden"
           initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >

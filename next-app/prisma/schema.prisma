@@ -44,25 +44,16 @@ model Pg {
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id])
 
-  coordinates Coordinates?
+  coordinates String
 }
 
 model City {
   id   String @id @default(uuid())
-  name String
-}
-
-model Coordinates {
-  id   String @id @default(uuid())
-  long String
-  lat  String
-  pgId String @unique
-
-  pg Pg @relation(fields: [pgId], references: [id])
+  name String @unique
 }
 
 enum Gender {
   MALE
   FEMALE
-  BOTH
+  ANY
 }

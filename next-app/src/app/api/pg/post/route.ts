@@ -1,12 +1,13 @@
 import { verifyAccessToken } from "@/lib/auth/jwt";
 import prisma from "@/lib/prisma";
+import { pgFormSchema } from "@/schemas/pgFromSchema";
 import { NextRequest, NextResponse } from "next/server";
 
-// Define types for better type safety
-type Coordinates = {
-  lat: number;
-  lng: number;
-};
+enum Gender {
+  MALE,
+  FEMALE,
+  ANY,
+}
 
 interface CreatePGRequest {
   name: string;
@@ -14,9 +15,9 @@ interface CreatePGRequest {
   city: string;
   address: string;
   rentPerMonth: number;
-  gender: "male" | "female" | "any";
+  gender: Gender;
   isDummy: boolean;
-  coordinates: Coordinates;
+  coordinates: string;
   bhk: number;
   capacity: number;
   capacityCount: number;
@@ -45,51 +46,16 @@ export async function POST(req: NextRequest) {
 
     const data: CreatePGRequest = await req.json();
 
-    // Validate required fields
-    const requiredFields = [
-      "name",
-      "contact",
-      "city",
-      "address",
-      "rentPerMonth",
-      "gender",
-      "coordinates",
-      "bhk",
-      "capacity",
-      "description",
-    ];
+    const parsedData = pgFormSchema.parse(data);
 
-    const missingFields = requiredFields.filter((field) => !data[field]);
-    if (missingFields.length > 0) {
-      return NextResponse.json(
-        {
-          error: `Missing required fields: ${missingFields.join(", ")}`,
-          success: false,
-        },
-        { status: 400 }
-      );
-    }
+    console.log(parsedData.gender);
 
-    // Validate numeric fields
-    if (
-      data.rentPerMonth <= 0 ||
-      data.bhk <= 0 ||
-      data.capacity <= 0 ||
-      data.capacityCount < 0
-    ) {
-      return NextResponse.json(
-        {
-          error: "Invalid numeric values provided",
-          success: false,
-        },
-        { status: 400 }
-      );
-    }
+    const parsedCity = parsedData.city.trim().toLowerCase();
+    console.log(parsedCity);
 
-    // Validate city
     const isValidCity = await prisma.city.findUnique({
       where: {
-        name: data.city,
+        name: parsedCity,
       },
     });
 
@@ -100,18 +66,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create the PG with all fields
     const newPG = await prisma.pg.create({
       data: {
-        name: data.name,
-        contact: data.contact,
-        city: data.city,
-        address: data.address,
-        rentPerMonth: data.rentPerMonth,
-        gender: data.gender,
-        isDummy: data.isDummy ?? false,
+        name: parsedData.name,
+        contact: parsedData.contact,
+        city: parsedCity,
+        address: parsedData.address,
+        rentPerMonth: parsedData.rentPerMonth,
+        gender: parsedData.gender,
+        isDummy: parsedData.isDummy ?? false,
         ownerId: userId,
-        coordinates: data.coordinates,
+        coordinates: parsedData.coordinates,
         bhk: data.bhk,
         capacity: data.capacity,
         capacityCount: data.capacityCount ?? 0,
@@ -130,9 +95,8 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating PG:", error);
+    console.log(error);
 
-    // Handle specific errors
     if (error instanceof Error) {
       if (error.message.includes("Unique constraint")) {
         return NextResponse.json(

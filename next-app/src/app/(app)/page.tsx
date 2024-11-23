@@ -1,9 +1,7 @@
-import React from "react";
-import LocationInput from "../../components/specific/LocationInput";
 import Image from "next/image";
-import About from "@/components/specific/About";
+import LocationInput from "../../components/specific/LocationInput";
 
-const page = () => {
+const Page = () => {
   return (
     <div className="w-full">
       <section className="min-h-[calc(100vh-69px)] w-full flex flex-col justify-between bg-[url('/assets/headline-bg.png')] bg-repeat-x bg-bottom">
@@ -28,14 +26,11 @@ const page = () => {
           height={500}
         />
       </section>
-      <section className="min-h-screen w-full flex flex-col justify-evenly ">
+      {/* <section className="min-h-screen w-full flex flex-col justify-evenly ">
         <About />
-      </section>
-      <section className="min-h-screen w-full flex flex-col items-center ">
-        <About />
-      </section>
+      </section> */}
     </div>
   );
 };
 
-export default page;
+export default Page;

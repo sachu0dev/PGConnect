@@ -1,10 +1,42 @@
+"use client";
+import axios from "axios";
 import { LocateFixed, Search } from "lucide-react";
-import React from "react";
-import { Button } from "../ui/button";
+import React, { useEffect, useState } from "react";
 
 const LocationInput = () => {
+  const [mainHeadline, setMainHeadline] = useState({
+    pgCount: "",
+    cityCount: "",
+    success: false,
+  });
+  const fetchMainHeading = async () => {
+    const res = await axios.get("/api/extra/get-main-headline");
+    console.log(res.data);
+    if (res.data.success) {
+      setMainHeadline({
+        pgCount: res.data.totalPGs,
+        cityCount: res.data.totalCities,
+        success: true,
+      });
+    }
+  };
+  useEffect(() => {
+    fetchMainHeading();
+  }, []);
   return (
     <div className="w-full max-w-[800px] shadow-md p-4  rounded-md">
+      <div className="flex justify-center items-center py-4">
+        {mainHeadline.success ? (
+          <h1 className="text-3xl font-bold font-inter text-black">
+            Over {mainHeadline.pgCount}+ pgs and homes across{" "}
+            {mainHeadline.cityCount} Cities
+          </h1>
+        ) : (
+          <h1 className="text-3xl font-bold font-inter text-black">
+            Find pg anywhere
+          </h1>
+        )}
+      </div>
       <div className="w-full flex justify-center  border-[3px] text-black border-[#014073] pl-6 mb-4">
         <input
           placeholder="Enter city name, area etc..."
