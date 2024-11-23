@@ -20,7 +20,14 @@ export async function POST(req: NextRequest) {
       !(await bcrypt.compare(password, user.password))
     ) {
       return NextResponse.json(
-        { message: "Invalid credentials" },
+        { message: "Invalid credentials", success: false },
+        { status: 401 }
+      );
+    }
+
+    if (!user.isVerified) {
+      return NextResponse.json(
+        { message: "User not verified", success: false },
         { status: 401 }
       );
     }
@@ -35,11 +42,11 @@ export async function POST(req: NextRequest) {
       path: "/",
     });
 
-    return NextResponse.json({ accessToken }, { status: 200 });
+    return NextResponse.json({ accessToken, success: true }, { status: 200 });
   } catch (error) {
     console.error("Login Error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", success: false },
       { status: 500 }
     );
   }

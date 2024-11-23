@@ -1,7 +1,6 @@
 import axios from "axios";
 import { store } from "@/lib/store";
 import { refreshUser, logout } from "@/lib/features/user/userSlice";
-import { access } from "fs";
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
@@ -70,12 +69,12 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (err) {
         store.dispatch(logout());
-
         if (
           typeof window !== "undefined" &&
           window.location.pathname !== "/login" &&
           window.location.pathname !== "/register" &&
-          window.location.pathname !== "/"
+          window.location.pathname !== "/" &&
+          !window.location.pathname.startsWith("/verify") // Allow access to /verify routes
         ) {
           window.location.href = "/login";
         }

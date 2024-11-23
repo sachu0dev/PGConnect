@@ -6,7 +6,8 @@ export function middleware(req: NextRequest) {
   if (
     req.nextUrl.pathname === "/" ||
     req.nextUrl.pathname === "/login" ||
-    req.nextUrl.pathname === "/register"
+    req.nextUrl.pathname === "/register" ||
+    req.nextUrl.pathname.startsWith("/verify")
   ) {
     return NextResponse.next();
   }
@@ -19,5 +20,7 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|images|assets|icons|favicon.ico).*)",
+  ],
 };

@@ -8,8 +8,10 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export async function POST(req: NextRequest) {
   try {
-    const { token, userType = "user" } = await req.json();
+    const { token } = await req.json();
+
     const cookieStore = await cookies();
+
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -25,69 +27,11 @@ export async function POST(req: NextRequest) {
     const username =
       payload.name?.replace(/\s+/g, "_").toLowerCase() || email.split("@")[0];
 
-    if (userType === "pgOwner") {
-      let pgOwner = await prisma.pgOwner.findUnique({
-        where: { email },
-      });
+    let user = await prisma.user.findUnique({
+      where: { googleId },
+    });
 
-      if (!pgOwner) {
-        pgOwner = await prisma.pgOwner.create({
-          data: {
-            username,
-            email,
-            phoneNumber: "",
-            isVerified: true,
-          },
-        });
-      }
-
-      const accessToken = generateAccessToken(pgOwner.id);
-      const refreshToken = generateRefreshToken(pgOwner.id);
-
-      cookieStore.set("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 7 * 24 * 60 * 60,
-      });
-
-      return NextResponse.json({
-        accessToken,
-        user: {
-          id: pgOwner.id,
-          email: pgOwner.email,
-          username: pgOwner.username,
-          isPgOwner: true,
-        },
-      });
-    } else {
-      let user = await prisma.user.findUnique({
-        where: { googleId },
-      });
-
-      if (!user) {
-        const existingUserWithEmail = await prisma.user.findUnique({
-          where: { email },
-        });
-
-        if (existingUserWithEmail) {
-          user = await prisma.user.update({
-            where: { id: existingUserWithEmail.id },
-            data: { googleId },
-          });
-        } else {
-          user = await prisma.user.create({
-            data: {
-              username,
-              email,
-              googleId,
-              isVerified: true,
-            },
-          });
-        }
-      }
-
+    if (user) {
       const accessToken = generateAccessToken(user.id);
       const refreshToken = generateRefreshToken(user.id);
 
@@ -105,14 +49,55 @@ export async function POST(req: NextRequest) {
           id: user.id,
           email: user.email,
           username: user.username,
-          isPgOwner: false,
         },
+        success: true,
       });
+    } else {
+      const existingUserWithEmail = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (existingUserWithEmail) {
+        user = await prisma.user.update({
+          where: { id: existingUserWithEmail.id },
+          data: { googleId },
+        });
+      } else {
+        user = await prisma.user.create({
+          data: {
+            username,
+            email,
+            googleId,
+            isVerified: true,
+          },
+        });
+      }
     }
+
+    const accessToken = generateAccessToken(user.id);
+    const refreshToken = generateRefreshToken(user.id);
+
+    cookieStore.set("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60,
+    });
+
+    return NextResponse.json({
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      },
+      success: true,
+    });
   } catch (error) {
     console.error("Google OAuth Error:", error);
     return NextResponse.json(
-      { error: "Authentication failed" },
+      { error: "Authentication failed", success: false },
       { status: 401 }
     );
   }

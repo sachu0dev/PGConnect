@@ -52,9 +52,9 @@ export async function POST(request: Request) {
     } else {
       await prisma.user.create({
         data: {
-          username,
-          email,
-          phoneNumber,
+          username: username,
+          email: email,
+          phoneNumber: phoneNumber,
           password: hashedPassword,
           verifyCode,
           verifyCodeExpireAt: new Date(Date.now() + 3600000),
@@ -78,14 +78,12 @@ export async function POST(request: Request) {
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message:
-          "User registered successfully. Please check your email for verification code.",
-      }),
-      { status: 201 }
-    );
+    return new Response(null, {
+      status: 303,
+      headers: {
+        Location: `/verify/${username}`,
+      },
+    });
   } catch (error) {
     console.error("Error registering user:", error);
     return new Response(

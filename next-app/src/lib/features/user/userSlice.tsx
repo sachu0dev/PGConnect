@@ -17,7 +17,7 @@ interface UserState {
 const initialState: UserState = {
   isUser: false,
   accessToken: null,
-  loading: true,
+  loading: false,
   error: null,
   userData: null,
 };
@@ -54,6 +54,7 @@ const userSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+
     refreshUser(state, action: PayloadAction<string>) {
       state.accessToken = action.payload;
       state.loading = false;

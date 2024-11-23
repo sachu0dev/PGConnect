@@ -19,7 +19,7 @@ export async function POST() {
 
   if (!refreshToken) {
     return NextResponse.json(
-      { message: "No refresh token found" },
+      { message: "No refresh token found", success: false },
       { status: 401 }
     );
   }
@@ -29,7 +29,10 @@ export async function POST() {
     const user = await getUserById(userId);
 
     if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "User not found", success: false },
+        { status: 404 }
+      );
     }
 
     const newAccessToken = generateAccessToken(user.id);
@@ -45,7 +48,7 @@ export async function POST() {
     return response;
   } catch (error) {
     return NextResponse.json(
-      { message: "Invalid refresh token" },
+      { message: "Invalid refresh token", success: false },
       { status: 401 }
     );
   }

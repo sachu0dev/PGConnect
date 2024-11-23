@@ -20,43 +20,36 @@ model User {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  pgOwner   PgOwner? @relation(fields: [pgOwnerId], references: [id])
-  pgOwnerId String?
-}
-
-model PgOwner {
-  id                 String    @id @default(uuid())
-  username           String    @unique
-  email              String    @unique
-  phoneNumber        String
-  password           String?
-  verifyCode         String?
-  verifyCodeExpireAt DateTime?
-  isVerified         Boolean   @default(false)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  pgs  Pg[]
-  User User[]
+  Pg Pg[]
 }
 
 model Pg {
   id               String   @id @default(uuid())
   name             String
-  contact          String?
+  contact          String
   city             String
-  address          String?
-  rentPerMonth     Float?
+  address          String
+  rentPerMonth     Float
+  description      String
+  capacity         Int
+  capacityCount    Int      @default(0)
+  images           String[]
+  bhk              Int
   isDummy          Boolean  @default(false)
   isAcceptingGuest Boolean  @default(true)
   gender           Gender
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  owner   PgOwner @relation(fields: [ownerId], references: [id])
   ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
 
   coordinates Coordinates?
+}
+
+model City {
+  id   String @id @default(uuid())
+  name String
 }
 
 model Coordinates {
@@ -64,7 +57,8 @@ model Coordinates {
   long String
   lat  String
   pgId String @unique
-  pg   Pg     @relation(fields: [pgId], references: [id])
+
+  pg Pg @relation(fields: [pgId], references: [id])
 }
 
 enum Gender {

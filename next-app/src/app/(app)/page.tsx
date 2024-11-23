@@ -6,14 +6,14 @@ import About from "@/components/specific/About";
 const page = () => {
   return (
     <div className="w-full">
-      <section className="min-h-[calc(100vh-97px)] w-full flex flex-col justify-between bg-[url('/assets/headline-bg.png')] bg-repeat-x bg-bottom">
+      <section className="min-h-[calc(100vh-69px)] w-full flex flex-col justify-between bg-[url('/assets/headline-bg.png')] bg-repeat-x bg-bottom">
         <div>
           <div className="w-full flex flex-col justify-center items-center  mt-12 mb-8">
             <h1 className="text-[#014073] text-5xl mb-4 font-medium">
               Book PG Anywhere
             </h1>
             <p className="text-lg">
-              India's Largest PG Network to Book your PG Online
+              India&lsquo;s Largest PG Network to Book your PG Online
             </p>
           </div>
           <div className="w-full flex flex-col justify-center items-center   mb-8 ">

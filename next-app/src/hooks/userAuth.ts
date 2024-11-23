@@ -4,6 +4,10 @@ interface GoogleUser {
   username: string;
 }
 
+interface GoogleProps {
+  tokenId: string;
+}
+
 interface AuthResponse {
   accessToken: string;
   user: {
@@ -11,16 +15,23 @@ interface AuthResponse {
     email: string;
     username: string;
     isPgOwner: boolean;
+    accountType: "user" | "PgOwner"; // Making accountType more specific
   };
 }
 
+import { logout } from "@/lib/features/user/userSlice";
+import { useAppDispatch } from "@/lib/hooks";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const router = useRouter();
 
-  const googleLogin = async (tokenId: string) => {
+  const googleLogin = async ({ tokenId }: GoogleProps) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -34,20 +45,11 @@ const useAuth = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Login failed");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Login failed");
       }
 
-      const data: AuthResponse = await response.json();
-
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem(
-        "userType",
-        data.user.isPgOwner ? "pgOwner" : "user"
-      );
-
-      window.location.href = data.user.isPgOwner
-        ? "/owner/dashboard"
-        : "/dashboard";
+      window.location.href = "/";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
     } finally {
@@ -55,7 +57,14 @@ const useAuth = () => {
     }
   };
 
-  return { googleLogin, isLoading, error };
+  const logOut = async () => {
+    localStorage.removeItem("accessToken");
+    await axios.post("/api/auth/logout");
+    dispatch(logout());
+    window.location.href = "/";
+  };
+
+  return { googleLogin, logOut, isLoading, error };
 };
 
 export default useAuth;
