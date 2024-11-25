@@ -23,7 +23,6 @@ const defaultCenter = {
   lng: 77.209,
 };
 
-// Types for form data
 interface FormData {
   name: string;
   contact: string;
@@ -37,7 +36,6 @@ interface FormData {
   capacity: string;
   description: string;
   isAcceptingGuest: boolean;
-  images: string[];
 }
 
 const AddressForm: React.FC = () => {
@@ -48,6 +46,7 @@ const AddressForm: React.FC = () => {
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
   const [isValidCity, setIsValidCity] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [cityMessage, setCityMessage] = useState<{
     error: boolean;
     message: string;
@@ -69,8 +68,10 @@ const AddressForm: React.FC = () => {
     capacity: "",
     description: "",
     isAcceptingGuest: true,
-    images: [],
   });
+
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof FormData, string>>
@@ -116,6 +117,12 @@ const AddressForm: React.FC = () => {
     return () => clearTimeout(debounceTimeout);
   }, [center, fetchAddress]);
 
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+    };
+  }, []);
+
   const handleMapDragEnd = () => {
     if (mapRef.current) {
       const newCenter = {
@@ -158,34 +165,47 @@ const AddressForm: React.FC = () => {
       return;
     }
 
-    const imagesWithPreview = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
+    // Validate file types and sizes
+    const validFiles = files.every((file) => {
+      const isValidType = ["image/jpeg", "image/png", "image/webp"].includes(
+        file.type
+      );
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB max
+      return isValidType && isValidSize;
+    });
 
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...imagesWithPreview],
-    }));
+    if (!validFiles) {
+      toast.error(
+        "Invalid file type or size. Please use JPEG/PNG/WebP images under 5MB"
+      );
+      return;
+    }
+
+    setImageFiles(files);
+    setImagePreviews(files.map((file) => URL.createObjectURL(file)));
   };
 
   const handleRemoveImage = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => {
+      // Revoke the URL to prevent memory leaks
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target as HTMLInputElement; // Type assertion for checkbox
     let finalValue: string | number | boolean = value;
 
     if (type === "number") {
       finalValue = value === "" ? "" : Number(value);
     } else if (type === "checkbox") {
-      finalValue = checked;
+      finalValue = (e.target as HTMLInputElement).checked;
     }
 
     setFormData((prev) => ({
@@ -209,8 +229,8 @@ const AddressForm: React.FC = () => {
         setCityMessage({ error: true, message: response.data.error });
       }
     } catch (error: any) {
-      console.error("Error checking city:", error);
       setIsValidCity(false);
+      toast.error(error.response?.data?.error || "Error occurred");
       setCityMessage({
         error: true,
         message: error.response?.data?.error || "Error occurred",
@@ -226,18 +246,41 @@ const AddressForm: React.FC = () => {
       return;
     }
 
+    if (imageFiles.length < 3) {
+      toast.error("Please upload at least 3 images");
+      return;
+    }
+
     try {
+      const formDataToSend = new FormData();
+
       const parsedData = pgFormSchema.parse(formData);
-      const response = await api.post("/api/pg/post", parsedData);
+
+      Object.entries(parsedData).forEach(([key, value]) => {
+        if (key !== "images") {
+          formDataToSend.append(key, value.toString());
+        }
+      });
+
+      imageFiles.forEach((file) => {
+        formDataToSend.append("images", file);
+      });
+
+      const response = await api.post("/api/pg/post", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       if (response.data.success) {
         toast.success("PG created successfully!");
+        // Reset form
         setFormData({
           name: "",
           contact: "",
           city: "",
           address: "",
-          rentPerMonth: 100,
+          rentPerMonth: 0,
           gender: "MALE",
           isDummy: false,
           coordinates: "",
@@ -245,13 +288,16 @@ const AddressForm: React.FC = () => {
           capacity: "",
           description: "",
           isAcceptingGuest: true,
-          images: [],
         });
-        setFieldErrors({}); // Clear errors on successful submission
+        setImageFiles([]);
+        setImagePreviews([]);
+        setFieldErrors({});
       } else {
         toast.error(response.data.error || "Failed to create PG");
       }
     } catch (error: any) {
+      console.error("Error creating PG:", error);
+
       if (error instanceof z.ZodError) {
         const newFieldErrors: Partial<Record<keyof FormData, string>> = {};
         error.errors.forEach((err) => {
@@ -261,8 +307,7 @@ const AddressForm: React.FC = () => {
         setFieldErrors(newFieldErrors);
         toast.error("Validation errors occurred. Please check the fields.");
       } else {
-        console.error("Error creating PG:", error);
-        toast.error("Something went wrong!");
+        toast.error(error.response?.data?.message || "Something went wrong!");
       }
     }
   };
@@ -271,7 +316,9 @@ const AddressForm: React.FC = () => {
 
   return (
     <div className="p-4 max-w-[800px] mx-auto bg-white shadow rounded">
-      <h1 className="text-2xl font-bold mb-6">Create a New PG</h1>
+      <h1 className="text-2xl font-bold mb-6 text-slate-700">
+        Create a New PG
+      </h1>
 
       <div className="relative mb-4">
         <StandaloneSearchBox
@@ -307,7 +354,7 @@ const AddressForm: React.FC = () => {
 
         <button
           onClick={handleUseCurrentLocation}
-          className="absolute bottom-4 right-4 flex items-center px-4 py-2 bg-blue-500 text-white rounded"
+          className="absolute bottom-4 right-4 flex items-center px-4 py-2 bg-primary1 text-white rounded"
         >
           <LocateFixed className="mr-2" /> Use Current Location
         </button>
@@ -502,10 +549,10 @@ const AddressForm: React.FC = () => {
             className="w-full mt-1 p-2 border rounded"
           />
           <div className="grid grid-cols-3 gap-4 mt-4">
-            {formData.images.map((image, index) => (
+            {imagePreviews.map((image, index) => (
               <div key={index} className="relative group">
                 <img
-                  src={image.preview}
+                  src={image}
                   alt={`Preview ${index}`}
                   className="w-full h-32 object-cover rounded shadow"
                 />
@@ -571,9 +618,10 @@ const AddressForm: React.FC = () => {
 
         <button
           type="submit"
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          disabled={loading}
+          className="w-full px-4 py-2 bg-primary1 text-white rounded hover:bg-blue-700"
         >
-          Create PG
+          {loading ? "Creating..." : "Create PG"}
         </button>
       </form>
     </div>

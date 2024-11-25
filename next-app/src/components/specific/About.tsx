@@ -41,7 +41,7 @@ const About = () => {
               <Image src="/icons/logo.png" alt="logo" width={80} height={80} />
             </div>
           </CarouselItem>
-          <CarouselItem className="md:basis-1/2 lg:basis-1/4 bg-[url('/assets/city-line-art.png')] bg-repeat-x bg-bottom bg-[#014073] bg-contain flex  p-4  h-[250px] mx-2">
+          <CarouselItem className="md:basis-1/2 lg:basis-1/4 bg-[url('/assets/city-line-art.png')] bg-repeat-x bg-bottom bg-primary1 bg-contain flex  p-4  h-[250px] mx-2">
             <div className="text-white flex-1">
               <h3>Instant Discount</h3>
               <h1 className="text-3xl font-bold">Gurgaon</h1>
@@ -89,7 +89,7 @@ const About = () => {
               <Image src="/icons/logo.png" alt="logo" width={80} height={80} />
             </div>
           </CarouselItem>
-          <CarouselItem className="md:basis-1/2 lg:basis-1/4 bg-[url('/assets/city-line-art.png')] bg-repeat-x bg-bottom bg-[#014073] bg-contain flex  p-4  h-[250px] mx-2">
+          <CarouselItem className="md:basis-1/2 lg:basis-1/4 bg-[url('/assets/city-line-art.png')] bg-repeat-x bg-bottom bg-primary1 bg-contain flex  p-4  h-[250px] mx-2">
             <div className="text-white flex-1">
               <h3>Instant Discount</h3>
               <h1 className="text-3xl font-bold">Gurgaon</h1>
@@ -137,7 +137,7 @@ const About = () => {
               <Image src="/icons/logo.png" alt="logo" width={80} height={80} />
             </div>
           </CarouselItem>
-          <CarouselItem className="md:basis-1/2 lg:basis-1/4 bg-[url('/assets/city-line-art.png')] bg-repeat-x bg-bottom bg-[#014073] bg-contain flex  p-4  h-[250px] mx-2">
+          <CarouselItem className="md:basis-1/2 lg:basis-1/4 bg-[url('/assets/city-line-art.png')] bg-repeat-x bg-bottom bg-primary1 bg-contain flex  p-4  h-[250px] mx-2">
             <div className="text-white flex-1">
               <h3>Instant Discount</h3>
               <h1 className="text-3xl font-bold">Gurgaon</h1>
@@ -174,7 +174,7 @@ const About = () => {
       <div className="flex justify-center items-center h-full">
         <div className="flex justify-evenly space-x-10 mx-12 flex-col md:flex-row md:mx-44 lg:mx-72  mt-12">
           <div className="flex-1">
-            <h1 className="text-[#014073] text-3xl mb-4 font-medium">
+            <h1 className="text-primary1 text-3xl mb-4 font-medium">
               About PGConnect
             </h1>
             <div className="w-[80px] bg-[#019fe9] h-[4px] mb-4"></div>

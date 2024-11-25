@@ -5,16 +5,16 @@ export async function GET(req: NextRequest) {
   try {
     const totalCities = await prisma.city.count();
     const totalPGs = await prisma.pg.count();
+    const beds = await prisma.pg.aggregate({
+      _sum: {
+        capacity: true,
+      },
+    });
 
-    if (totalCities === 0 || totalPGs === 0) {
-      return NextResponse.json(
-        { error: "Internal server error", success: false },
-        { status: 500 }
-      );
-    }
+    const totalBeds = beds._sum.capacity;
 
     return NextResponse.json(
-      { totalCities, totalPGs, success: true },
+      { totalCities, totalPGs, totalBeds, success: true },
       { status: 200 }
     );
   } catch (error) {

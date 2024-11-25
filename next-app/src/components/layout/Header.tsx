@@ -2,21 +2,13 @@
 import useAuth from "@/hooks/userAuth";
 import api from "@/lib/axios";
 import { setUser } from "@/lib/features/user/userSlice";
-import {
-  BadgeDollarSign,
-  Building,
-  GitCommitHorizontal,
-  Menu,
-  Slash,
-  User,
-  X,
-} from "lucide-react";
-import Image from "next/image";
+import { BadgeDollarSign, Building, Menu, User, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 import { closeNavMenu, openNavMenu } from "../../lib/features/misc/miscSlice";
 import { useAppDispatch, useAppSelector } from "../../lib/hooks";
 import { RootState } from "../../lib/store";
+import { ThemeToggler } from "../specific/ThemeToggler";
 
 const Header = () => {
   const { isNavMenuOpen } = useAppSelector((state: RootState) => state.misc);
@@ -63,10 +55,14 @@ const Header = () => {
   };
 
   return (
-    <div className="bg-white min-h-[69px] flex justify-between  items-center px-6 md:pl-12 text-black border-b border-slate-200">
+    <div className=" min-h-[69px] flex justify-between  items-center px-6 md:pl-12 text-black border-b  border-slate-200 dark:border-slate-800">
       <div>
-        <Link href="/">
-          <Image src={"/icons/logo.png"} alt="logo" width={200} height={80} />
+        <Link href="/" className="flex">
+          <h1 className="text-3xl font-extrabold text-primary1">PG</h1>
+          <span className="text-primary1 text-3xl">.</span>
+          <h1 className="  transform -translate-x-1 text-slate-700 dark:text-slate-400">
+            CONNECT
+          </h1>
         </Link>
       </div>
       <div className="hidden md:flex  text-black ">
@@ -75,10 +71,12 @@ const Header = () => {
           className="h-full flex justify-center space-x-2 border-r border-slate-200 pr-4 py-4"
         >
           <div className="flex items-center">
-            <BadgeDollarSign size={24} />
+            <BadgeDollarSign size={24} color={"#60C3AD"} />
           </div>
           <div className="flex flex-col items-center">
-            <h3 className="font-semibold text-sm">Become a Member</h3>
+            <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-400">
+              Become a Member
+            </h3>
             <span className="text-xs text-slate-500">More Benefits</span>
           </div>
         </Link>
@@ -87,20 +85,22 @@ const Header = () => {
           className="h-full flex justify-center space-x-2 border-r border-slate-200 p-4 "
         >
           <div className="flex items-center">
-            <Building size={30} />
+            <Building size={24} color={"#60C3AD"} />
           </div>
           <div className="flex flex-col items-center">
-            <h3 className="font-semibold text-sm">List your property</h3>
+            <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-400">
+              List your property
+            </h3>
             <span className="text-xs text-slate-500">For free</span>
           </div>
         </Link>
         <div className="h-full flex justify-center space-x-2 p-4">
           <div className="flex items-center justify-center">
-            <User size={30} />
+            <User size={24} color={"#60C3AD"} />
           </div>
           <div className="flex flex-col items-center">
             {userData ? (
-              <div className="hidden md:flex space-x-2  font-semibold text-sm ">
+              <div className="hidden md:flex space-x-2  font-semibold text-sm text-slate-700 dark:text-slate-400">
                 <Link href="/profile">{userData.username}</Link>
                 <span>/</span>
                 <div onClick={logoutHandler} className="cursor-pointer ">
@@ -108,7 +108,7 @@ const Header = () => {
                 </div>
               </div>
             ) : (
-              <div className="hidden md:flex space-x-2   font-semibold text-sm ">
+              <div className="hidden md:flex space-x-2   font-semibold text-smtext-slate-700 dark:text-slate-400">
                 <Link href="/login">Login</Link>
                 <span>/</span>
 
@@ -118,6 +118,9 @@ const Header = () => {
             <span className="text-xs text-slate-500">
               Register to use our services
             </span>
+          </div>
+          <div className="flex flex-col items-center">
+            <ThemeToggler />
           </div>
         </div>
       </div>
@@ -147,12 +150,18 @@ const Header = () => {
         )}
       </div> */}
       {!isNavMenuOpen && (
-        <button className="flex md:hidden" onClick={handelOpen}>
+        <button
+          className="flex md:hidden text-slate-700 dark:text-slate-400"
+          onClick={handelOpen}
+        >
           <Menu />
         </button>
       )}
       {isNavMenuOpen && (
-        <button className="flex md:hidden" onClick={handelClose}>
+        <button
+          className="flex md:hidden text-slate-700 dark:text-slate-400"
+          onClick={handelClose}
+        >
           <X />
         </button>
       )}

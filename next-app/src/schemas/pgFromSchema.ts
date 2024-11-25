@@ -18,8 +18,4 @@ export const pgFormSchema = z.object({
     .min(1, "Description is required")
     .max(200, "Description must be at most 200 characters"),
   isAcceptingGuest: z.boolean(),
-  images: z
-    .array(z.string())
-    .min(3, "You must upload at least 3 images")
-    .max(8, "You can upload up to 8 images"),
 });

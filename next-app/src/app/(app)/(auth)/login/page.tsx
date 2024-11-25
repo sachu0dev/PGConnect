@@ -98,7 +98,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="bg-[#014073] min-h-[calc(100vh-69px)] flex justify-center items-center px-4">
+    <div className="bg-primary1/20 min-h-[calc(100vh-69px)] flex justify-center items-center px-4 py-16">
       <div className="flex flex-col md:flex-row max-w-[800px] w-full">
         {/* Form Section */}
         <div className="flex-1 bg-white rounded-xl shadow-lg p-8 mb-4 md:mb-0">

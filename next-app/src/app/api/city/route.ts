@@ -4,32 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    // const accessToken = req.headers.get("Authorization");
-    // if (!accessToken || !accessToken.startsWith("Bearer ")) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
-
-    // const token = accessToken.replace("Bearer ", "");
-    // let decodedToken;
-
-    // try {
-    //   decodedToken = verifyAccessToken(token);
-    // } catch (error) {
-    //   console.error("Token verification failed:", error);
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
-
-    // const { userId } = decodedToken;
-
-    // if (!userId) {
-    //   return NextResponse.json(
-    //     { error: "Unauthorized", success: false },
-    //     { status: 401 }
-    //   );
-    // }
-
     const { city } = await req.json();
-    console.log("City received:", city);
 
     const parsedCity = city.trim().toLowerCase();
 

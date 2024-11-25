@@ -3,8 +3,9 @@ import localFont from "next/font/local";
 import "./globals.css";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import ClientProvider from "./ClientProvider";
-import StoreProvider from "./StoreProvider";
+import ClientProvider from "./providers/ClientProvider";
+import StoreProvider from "./providers/StoreProvider";
+import { ThemeProvider } from "./providers/ThemeProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,16 +31,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased font-inter`}
       >
         <StoreProvider>
-          <ClientProvider>
-            <GoogleOAuthProvider
-              clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
-            >
-              {children}
-            </GoogleOAuthProvider>
-          </ClientProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ClientProvider>
+              <GoogleOAuthProvider
+                clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
+              >
+                {children}
+              </GoogleOAuthProvider>
+            </ClientProvider>
+          </ThemeProvider>
         </StoreProvider>
       </body>
     </html>

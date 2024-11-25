@@ -19,15 +19,6 @@ export default function RootLayout({
       {loading ? (
         <div className=" relative h-screen w-screen flex justify-center items-center bg-[url('/assets/headline-bg.png')] bg-repeat-x bg-bottom">
           <Loader />
-          <div className="absolute bottom-0 w-full">
-            <Image
-              className="w-full"
-              src={"/assets/city-slider.png"}
-              alt="city slider"
-              width={2000}
-              height={500}
-            />
-          </div>
         </div>
       ) : (
         <>

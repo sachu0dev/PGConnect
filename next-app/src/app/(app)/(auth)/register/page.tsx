@@ -4,7 +4,6 @@ import React from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-hot-toast";
 import GoogleButton from "@/components/specific/GoogleButton";
 import { useAppDispatch } from "@/lib/hooks";
 import Link from "next/link";
@@ -18,6 +17,7 @@ import {
 } from "@/lib/features/user/userSlice";
 import { useState } from "react";
 import axios from "axios";
+import { toast } from "sonner";
 
 const SignupPage = () => {
   const dispatch = useAppDispatch();
@@ -136,7 +136,7 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="bg-[#014073] min-h-[calc(100vh-69px)] flex justify-center items-center px-4">
+    <div className="bg-primary1/20 min-h-[calc(100vh-69px)] flex justify-center items-center px-4 py-16">
       <div className="flex flex-col md:flex-row max-w-[800px] w-full">
         {/* Image Section */}
         <div className="bg-transparent flex-1 md:py-4">

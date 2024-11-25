@@ -1,6 +1,7 @@
 import { sendVerificationEmail } from "@/helpers/sendVerificationEmail";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
     });
 
     if (existingUserByUsername) {
-      return new Response(
+      return new NextResponse(
         JSON.stringify({
           success: false,
           message: "Username is already taken",
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
 
     if (existingUserByEmail) {
       if (existingUserByEmail.isVerified) {
-        return new Response(
+        return new NextResponse(
           JSON.stringify({ success: false, message: "Email is already taken" }),
           { status: 400 }
         );
@@ -69,21 +70,19 @@ export async function POST(request: Request) {
     );
 
     if (!emailResponse.success) {
-      return new Response(
-        JSON.stringify({
+      return NextResponse.json(
+        {
           success: false,
           message: emailResponse.message,
-        }),
+        },
         { status: 500 }
       );
     }
 
-    return new Response(null, {
-      status: 303,
-      headers: {
-        Location: `/verify/${username}`,
-      },
-    });
+    return NextResponse.json(
+      { success: true, message: "User registered, verification email sent" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error registering user:", error);
     return new Response(
