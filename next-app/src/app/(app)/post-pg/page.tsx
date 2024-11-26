@@ -537,7 +537,7 @@ const AddressForm: React.FC = () => {
 
         <div>
           <label htmlFor="images" className="block font-medium">
-            Upload Images
+            Upload Images (note: the first image will be the cover image)
           </label>
           <input
             type="file"

@@ -12,45 +12,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        dark: {
-          bg: {
-            main: "#121918",
-            card: "#1A2422",
-            elevated: "#223330",
-          },
-          surface: {
-            low: "#162220",
-            mid: "#1E2E2B",
-            high: "#263B37",
-          },
-          interactive: {
-            input: "#1A2422",
-            hover: "#2A403C",
-            active: "#324943",
-          },
-          overlay: {
-            light: "rgba(96, 195, 173, 0.05)",
-            medium: "rgba(96, 195, 173, 0.08)",
-            heavy: "rgba(18, 25, 24, 0.8)",
-          },
-        },
-        primary1: {
-          DEFAULT: "#60C3AD",
-          dark: "#7DDEC8",
-        },
-        secondary1: {
-          DEFAULT: "#D1EEE7",
-          dark: "#1E3833",
-        },
-        accent: {
-          DEFAULT: "#75E6DA",
-          dark: "#8FFFF3",
-        },
-        bg: {
-          DEFAULT: "#FFFFFF",
-          dark: "#121918",
-        },
-        // shadcn-ui required colors
+        primary1: "#60C3AD",
+        secondary1: "#D1EEE7",
+        accent: "#75E6DA",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -72,6 +36,10 @@ export default {
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",

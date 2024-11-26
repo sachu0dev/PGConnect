@@ -1,9 +1,11 @@
 "use client";
+
 import { StandaloneSearchBox, useLoadScript } from "@react-google-maps/api";
 import axios from "axios";
 import { LocateFixed, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import NumberTicker from "../ui/number-ticker";
+import { useRouter } from "next/navigation";
 
 const LocationInput = () => {
   const [stats, setStats] = useState({
@@ -13,16 +15,24 @@ const LocationInput = () => {
     isLoading: true,
     error: null,
   });
+  const router = useRouter();
   const [selectedCity, setSelectedCity] = useState("");
   const [isLocating, setIsLocating] = useState(false);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
     libraries: ["places"],
   });
 
-  console.log(selectedCity);
+  const handleSearch = () => {
+    router.push(
+      `/pgs?city=${selectedCity ?? "inputRef.current?.value"}&payload=${
+        inputRef.current?.value
+      }`
+    );
+  };
 
   const fetchStats = async () => {
     try {
@@ -36,7 +46,7 @@ const LocationInput = () => {
           error: null,
         });
       }
-    } catch (error) {
+    } catch {
       setStats((prev) => ({
         ...prev,
         isLoading: false,
@@ -49,14 +59,16 @@ const LocationInput = () => {
     if (!searchBoxRef.current) return;
 
     const places = searchBoxRef.current.getPlaces();
+
     if (places?.length) {
       const place = places[0];
-      const cityComponent = place.address_components?.find((component) =>
-        component.types.includes("locality")
+      const cityComponent = place.address_components?.find(
+        (component) =>
+          component.types.includes("locality") ||
+          component.types.includes("political")
       );
       setSelectedCity(cityComponent?.long_name ?? "");
     }
-    console.log(selectedCity);
   };
 
   const handleLocationClick = async () => {
@@ -112,23 +124,24 @@ const LocationInput = () => {
   }) => (
     <div className="flex items-center space-x-2">
       {icon}
-      <div className="whitespace-pre-wrap text-xl font-semibold flex items-center tracking-tighter text-[#232728] dark:text-white">
-        <NumberTicker value={value} />+{" "}
+      <div className="whitespace-pre-wrap text-xl font-semibold flex items-center tracking-tighter  text-black">
+        <NumberTicker className="text-black" value={value} />+{" "}
         <span className="text-sm font-thin text-[#4e5253]">{label}</span>
       </div>
     </div>
   );
 
   return (
-    <div className="w-full max-w-[800px] shadow-md p-4 rounded-md bg-white">
-      <div className="w-full flex justify-between  rounded-lg overflow-hidden border border-slate-300 pl-6 mb-4">
+    <div className="w-full max-w-[800px] shadow-md p-4 rounded-md bg-white ">
+      <div className="w-full flex justify-between rounded-lg overflow-hidden border border-slate-300 pl-6 mb-4">
         <StandaloneSearchBox
           onLoad={(ref) => (searchBoxRef.current = ref)}
           onPlacesChanged={handlePlacesChanged}
         >
           <input
+            ref={inputRef}
             placeholder="Enter city name, area etc..."
-            className="border-none outline-none text-xl w-full flex-1 py-4 flex-1"
+            className="border-none outline-none text-xl w-full  py-4 text-black bg-white"
             aria-label="Location search"
           />
         </StandaloneSearchBox>
@@ -146,18 +159,13 @@ const LocationInput = () => {
           <button
             className="flex py-4 text-white px-8 bg-primary1 space-x-2 items-center hover:bg-primary1/90 transition-colors"
             aria-label="Search"
+            onClick={handleSearch}
           >
             <Search />
             <span>Search</span>
           </button>
         </div>
       </div>
-
-      {selectedCity && (
-        <div className="mb-4 text-lg font-semibold text-gray-700">
-          Selected City: {selectedCity}
-        </div>
-      )}
 
       {stats.error ? (
         <div className="text-red-500 text-center">{stats.error}</div>
@@ -167,6 +175,11 @@ const LocationInput = () => {
             icon={<CitySvgIcon />}
             value={stats.cityCount}
             label="Cities"
+          />
+          <StatisticItem
+            icon={<RoomSvgIcon />}
+            value={stats.pgCount}
+            label="PGs"
           />
           <StatisticItem
             icon={<BedSvgIcon />}
@@ -179,7 +192,6 @@ const LocationInput = () => {
   );
 };
 
-// Extracted SVG components for better organization
 const CitySvgIcon = () => (
   <svg width="26" height="26" viewBox="0 0 30 30" fill="none">
     <circle
@@ -234,7 +246,7 @@ const CitySvgIcon = () => (
   </svg>
 );
 
-const BedSvgIcon = () => (
+const RoomSvgIcon = () => (
   <svg width="26" height="26" viewBox="0 0 30 30" fill="none">
     <path
       d="M18 4.56797C18 3.69621 19.0377 3.24187 19.6783 3.83317L28.6783 12.1409C28.8834 12.3302 29 12.5966 29 12.8757V28C29 28.5523 28.5523 29 28 29H18V4.56797Z"
@@ -306,6 +318,35 @@ const BedSvgIcon = () => (
       stroke="#60C3AD"
       strokeWidth="2"
     />
+  </svg>
+);
+
+const BedSvgIcon = () => (
+  <svg width="26" height="26" viewBox="0 0 32 30" fill="none">
+    <path
+      d="M31 29V17C31 14.7909 29.2091 13 27 13H5C2.79086 13 1 14.7909 1 17V29"
+      stroke="#60C3AD"
+      strokeWidth="2"
+      strokeLinecap="round"
+    ></path>
+    <path
+      d="M27 12V5C27 2.79086 25.2091 1 23 1H9C6.79086 1 5 2.79086 5 5V12"
+      stroke="#60C3AD"
+      strokeWidth="2"
+      strokeLinecap="round"
+    ></path>
+    <path
+      d="M19 12V10C19 8.34315 17.6569 7 16 7V7C14.3431 7 13 8.34315 13 10V12"
+      stroke="#60C3AD"
+      strokeWidth="2"
+      strokeLinecap="round"
+    ></path>
+    <path
+      d="M1 24H31"
+      stroke="#60C3AD"
+      strokeWidth="2"
+      strokeLinecap="round"
+    ></path>
   </svg>
 );
 

@@ -68,7 +68,7 @@ const Header = () => {
       <div className="hidden md:flex  text-black ">
         <Link
           href="/membership"
-          className="h-full flex justify-center space-x-2 border-r border-slate-200 pr-4 py-4"
+          className="h-full flex justify-center space-x-2 border-r border-slate-200 dark:border-slate-800 pr-4 py-4"
         >
           <div className="flex items-center">
             <BadgeDollarSign size={24} color={"#60C3AD"} />
@@ -82,7 +82,7 @@ const Header = () => {
         </Link>
         <Link
           href="/post-pg"
-          className="h-full flex justify-center space-x-2 border-r border-slate-200 p-4 "
+          className="h-full flex justify-center space-x-2 border-r border-slate-200 dark:border-slate-800 p-4 "
         >
           <div className="flex items-center">
             <Building size={24} color={"#60C3AD"} />
@@ -98,7 +98,7 @@ const Header = () => {
           <div className="flex items-center justify-center">
             <User size={24} color={"#60C3AD"} />
           </div>
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center ">
             {userData ? (
               <div className="hidden md:flex space-x-2  font-semibold text-sm text-slate-700 dark:text-slate-400">
                 <Link href="/profile">{userData.username}</Link>
@@ -119,7 +119,7 @@ const Header = () => {
               Register to use our services
             </span>
           </div>
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center border-l border-slate-200 dark:border-slate-800 pl-4 h-full">
             <ThemeToggler />
           </div>
         </div>
