@@ -37,6 +37,7 @@ export default {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
+
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
@@ -61,9 +62,21 @@ export default {
           "0%,70%,100%": { opacity: "1" },
           "20%,50%": { opacity: "0" },
         },
+        flare: {
+          "0%": {
+            backgroundPosition: "0% 0%",
+          },
+          "50%": {
+            backgroundPosition: "100% 0%",
+          },
+          "100%": {
+            backgroundPosition: "0% 0%",
+          },
+        },
       },
       animation: {
         "caret-blink": "caret-blink 1.25s ease-out infinite",
+        flare: "flare 3s ease-in-out infinite",
       },
       borderRadius: {
         lg: "var(--radius)",

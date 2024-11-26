@@ -9,21 +9,17 @@ import { useAppDispatch } from "@/lib/hooks";
 import Link from "next/link";
 import { registerSchema } from "@/schemas/registerUserScheam";
 import { useRouter } from "next/navigation";
-import api from "@/lib/axios";
-import {
-  loginFailure,
-  loginStart,
-  loginSuccess,
-} from "@/lib/features/user/userSlice";
+import { loginFailure, loginSuccess } from "@/lib/features/user/userSlice";
 import { useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
+import { ApiResponse } from "@/types/response";
+import { AxiosError } from "axios";
 
 const SignupPage = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  // Combined form state
   const [formData, setFormData] = useState({
     username: "sushil",
     email: "suahilkumar134@gmail.com",
@@ -95,22 +91,22 @@ const SignupPage = () => {
     try {
       registerSchema.parse(formData);
 
-      const response = await axios.post("/api/auth/signup", {
+      const response = await axios.post<ApiResponse>("/api/auth/signup", {
         username: formData.username,
         email: formData.email,
         password: formData.password,
         phoneNumber: formData.phoneNumber,
       });
 
-      console.log(response.data);
+      const { success, message } = response.data;
 
-      if (!response.data.success) {
-        toast(response.data.message);
-        setErrors((prev) => ({ ...prev, form: response.data.message }));
-        dispatch(loginFailure(response.data.message));
+      if (!success) {
+        toast(message);
+        setErrors((prev) => ({ ...prev, form: message }));
+        dispatch(loginFailure(message));
       } else {
         toast("Verification email sent successfully");
-        dispatch(loginSuccess(response.data));
+        dispatch(loginSuccess(message));
         router.push(`/verify/${formData.username}`);
       }
     } catch (error) {
@@ -122,10 +118,15 @@ const SignupPage = () => {
           }
         });
         setErrors((prev) => ({ ...prev, ...fieldErrors }));
-      } else {
+      } else if ((error as AxiosError).response) {
+        const axiosError = error as AxiosError<ApiResponse>;
         const errorMessage =
-          error?.response?.data?.message ||
+          axiosError.response?.data.message ||
           "Registration failed. Please try again.";
+        toast.error(errorMessage);
+        setErrors((prev) => ({ ...prev, form: errorMessage }));
+      } else {
+        const errorMessage = "An unexpected error occurred.";
         toast.error(errorMessage);
         setErrors((prev) => ({ ...prev, form: errorMessage }));
       }

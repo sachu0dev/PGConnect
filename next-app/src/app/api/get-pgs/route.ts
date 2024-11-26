@@ -3,17 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("Received GET request:", request.nextUrl);
-
     const { searchParams } = request.nextUrl;
-    console.log("Search Params:", searchParams.toString());
 
     const city = searchParams.get("city");
-    console.log("City parameter:", city);
 
     const parsedPage = parseInt(searchParams.get("page") || "1", 10);
     const parsedLimit = parseInt(searchParams.get("limit") || "10", 10);
-    console.log("Parsed Page:", parsedPage, "Parsed Limit:", parsedLimit);
 
     // Initialize the filters object
     const filters: Record<string, any> = {};
@@ -21,7 +16,6 @@ export async function GET(request: NextRequest) {
     // If a city is provided, include it in the filter
     if (city) {
       filters.city = { contains: city.toLowerCase(), mode: "insensitive" };
-      console.log("Applied city filter:", filters.city);
     } else {
       console.log("No city filter applied, fetching all PGs.");
     }
@@ -37,7 +31,6 @@ export async function GET(request: NextRequest) {
         ...filters.rentPerMonth,
         gte: parseFloat(minRent),
       };
-      console.log("Applied minRent filter:", filters.rentPerMonth);
     }
 
     if (maxRent) {
@@ -45,23 +38,18 @@ export async function GET(request: NextRequest) {
         ...filters.rentPerMonth,
         lte: parseFloat(maxRent),
       };
-      console.log("Applied maxRent filter:", filters.rentPerMonth);
     }
 
     if (gender && gender !== "null") {
       filters.gender = gender;
-      console.log("Applied gender filter:", filters.gender);
     }
 
     if (bhk && bhk !== "null") {
       filters.bhk = parseInt(bhk, 10);
-      console.log("Applied bhk filter:", filters.bhk);
     }
 
     filters.isAcceptingGuest = true;
 
-    // Fetch total count and paginated data
-    console.log("Fetching data with filters:", filters);
     const [totalCount, pgs] = await Promise.all([
       prisma.pg.count({ where: filters }),
       prisma.pg.findMany({
@@ -95,10 +83,6 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    console.log("Fetched total count:", totalCount);
-    console.log("Fetched PGs:", pgs);
-
-    // Return the response with pagination and data
     const pagination = {
       total: totalCount,
       page: parsedPage,
@@ -107,8 +91,6 @@ export async function GET(request: NextRequest) {
       hasNextPage: parsedPage * parsedLimit < totalCount,
       hasPrevPage: parsedPage > 1,
     };
-
-    console.log("Pagination data:", pagination);
 
     return NextResponse.json({
       success: true,

@@ -10,6 +10,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Pagination } from "@/components/ui/pagination"; // shadcn pagination component
 import { toast } from "sonner";
 import PGCard from "@/components/specific/PGCard";
 
@@ -24,12 +25,12 @@ const debounce = (func: Function, delay: number) => {
 const SearchPage = () => {
   const searchParams = useSearchParams();
   const [pgs, setPgs] = useState([]);
-  const [city, setCity] = useState(searchParams.get("city") || "");
-  const [gender, setGender] = useState(null);
+  const [city, setCity] = useState<string>(searchParams.get("city") || "");
+  const [gender, setGender] = useState<string | null>(null);
   const [bhk, setBhk] = useState(null);
-  const [minRent, setMinRent] = useState("");
-  const [maxRent, setMaxRent] = useState("");
-  const [page, setPage] = useState(1);
+  const [minRent, setMinRent] = useState<string>("");
+  const [maxRent, setMaxRent] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
   const [pagination, setPagination] = useState({
     total: 0,
     totalPages: 0,
@@ -39,8 +40,8 @@ const SearchPage = () => {
   const [loading, setLoading] = useState(false);
 
   const fetchPgs = async () => {
-    if (loading) return; // Prevent fetching while loading
-    setLoading(true); // Set loading state to true
+    if (loading) return;
+    setLoading(true);
 
     try {
       const params = new URLSearchParams({
@@ -57,7 +58,7 @@ const SearchPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        setPgs((prevPgs) => [...prevPgs, ...data.data]);
+        setPgs(data.data);
         setPagination(data.pagination);
       } else {
         toast.error(data.error || "Failed to fetch data.");
@@ -65,58 +66,47 @@ const SearchPage = () => {
     } catch (error) {
       toast.error("An unexpected error occurred.");
     } finally {
-      setLoading(false); // Reset loading state after the request completes
+      setLoading(false);
     }
   };
 
-  const debouncedFetchPgs = debounce(fetchPgs, 500);
+  const debouncedFetchPgs = useCallback(debounce(fetchPgs, 500), [
+    city,
+    gender,
+    bhk,
+    minRent,
+    maxRent,
+    page,
+  ]);
 
-  const handleScroll = useCallback(
-    (event: any) => {
-      const bottom =
-        event.target.scrollHeight ===
-        event.target.scrollTop + event.target.clientHeight;
-      if (bottom && pagination.hasNextPage && !loading) {
-        setPage((prev) => prev + 1);
-      }
-    },
-    [pagination, loading]
-  );
-
-  useEffect(() => {
-    debouncedFetchPgs();
-  }, [city, gender, bhk, minRent, maxRent, page]);
-
-  useEffect(() => {
-    const container = document.getElementById("scroll-container");
-    if (container) {
-      container.addEventListener("scroll", handleScroll);
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener("scroll", handleScroll);
-      }
-    };
-  }, [handleScroll]);
-
-  const handleSearch = () => {
+  const handleFilterChange = () => {
     setPage(1);
-    setPgs([]);
+    debouncedFetchPgs();
+  };
+
+  useEffect(() => {
+    handleFilterChange();
+  }, [city, gender, bhk, minRent, maxRent]);
+
+  useEffect(() => {
     fetchPgs();
+  }, [page]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6 max-w-[1300px]">
-      <h1 className="text-2xl font-bold">Search Results</h1>
-      <div className="grid gap-4 md:grid-cols-4">
+    <div className="container mx-auto p-4 space-y-3 max-w-[1300px]">
+      {/* Filter Section */}
+      <div className="grid gap-4 py-4 md:grid-cols-4 sticky top-0 bg-white z-10">
         <Input
           placeholder="City"
           value={city}
           onChange={(e) => setCity(e.target.value)}
           className="col-span-1"
         />
-        <Select onValueChange={setGender} value={gender}>
+        <Select onValueChange={(value) => setGender(value)} value={gender}>
           <SelectTrigger>Gender</SelectTrigger>
           <SelectContent>
             <SelectItem value="null">Any</SelectItem>
@@ -124,7 +114,7 @@ const SearchPage = () => {
             <SelectItem value="FEMALE">Female</SelectItem>
           </SelectContent>
         </Select>
-        <Select onValueChange={setBhk} value={bhk}>
+        <Select onValueChange={(value) => setBhk(value)} value={bhk}>
           <SelectTrigger>BHK</SelectTrigger>
           <SelectContent>
             <SelectItem value="null">Any</SelectItem>
@@ -145,27 +135,37 @@ const SearchPage = () => {
             value={maxRent}
             onChange={(e) => setMaxRent(e.target.value)}
           />
-          <Button onClick={handleSearch} className="w-full md:w-auto">
+          <Button onClick={handleFilterChange} className="w-full md:w-auto">
             Search
           </Button>
         </div>
       </div>
 
+      {/* PG Results */}
       <div className="h-[28px]">
-        {pgs && pgs.length > 0 && (
+        {pgs.length > 0 && (
           <h2 className="text-lg font-semibold">
             {pagination.total} PGs waiting to be yours in {city}
           </h2>
         )}
       </div>
 
-      <div id="scroll-container" className="overflow-y-auto h-[70vh]">
-        <div className="">
+      <div className="flex">
+        <div className="flex-1 space-y-6">
           {pgs.map((pg: any) => (
             <PGCard key={pg.id} pg={pg} />
           ))}
         </div>
-        {loading && <div>Loading...</div>}
+        <div className="bg-black h-[90vh] min-h-0 xl:w-[420px] sticky top-20 rounded-3xl"></div>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center mt-6">
+        <Pagination
+          total={pagination.totalPages}
+          current={page}
+          onChange={handlePageChange}
+        />
       </div>
     </div>
   );
