@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { pgFormSchema } from "@/schemas/pgFromSchema";
 import { z } from "zod";
 import api from "@/lib/axios";
+import { AxiosError } from "axios";
+import { ApiResponse } from "@/types/response";
 
 const containerStyle = {
   width: "100%",
@@ -22,6 +24,11 @@ const defaultCenter = {
   lat: 28.6139,
   lng: 77.209,
 };
+
+interface AddressComponent {
+  long_name: string;
+  types: string[];
+}
 
 interface FormData {
   name: string;
@@ -44,7 +51,6 @@ const AddressForm: React.FC = () => {
   const [address, setAddress] = useState("");
   const mapRef = useRef<google.maps.Map | null>(null);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
   const [isValidCity, setIsValidCity] = useState(true);
   const [loading, setLoading] = useState(false);
   const [cityMessage, setCityMessage] = useState<{
@@ -92,13 +98,12 @@ const AddressForm: React.FC = () => {
       if (data.status === "OK") {
         const locationAddress = data.results[0]?.formatted_address || "";
         const addressComponents = data.results[0]?.address_components || [];
-        const cityComponent = addressComponents.find((comp: any) =>
+        const cityComponent = addressComponents.find((comp: AddressComponent) =>
           comp.types.includes("locality")
         )?.long_name;
 
         setAddress(locationAddress);
         setCity(cityComponent || "Unknown City");
-        handleCityCheck(cityComponent || "Unknown City");
 
         setFormData((prev) => ({
           ...prev,
@@ -116,12 +121,6 @@ const AddressForm: React.FC = () => {
     const debounceTimeout = setTimeout(() => fetchAddress(), 500);
     return () => clearTimeout(debounceTimeout);
   }, [center, fetchAddress]);
-
-  useEffect(() => {
-    return () => {
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
-    };
-  }, []);
 
   const handleMapDragEnd = () => {
     if (mapRef.current) {
@@ -153,7 +152,7 @@ const AddressForm: React.FC = () => {
         const { latitude, longitude } = position.coords;
         setCenter({ lat: latitude, lng: longitude });
       },
-      (error) => toast.error("Error getting location"),
+      () => toast.error("Error getting location"),
       { enableHighAccuracy: true }
     );
   };
@@ -165,7 +164,6 @@ const AddressForm: React.FC = () => {
       return;
     }
 
-    // Validate file types and sizes
     const validFiles = files.every((file) => {
       const isValidType = ["image/jpeg", "image/png", "image/webp"].includes(
         file.type
@@ -228,18 +226,20 @@ const AddressForm: React.FC = () => {
         setIsValidCity(false);
         setCityMessage({ error: true, message: response.data.error });
       }
-    } catch (error: any) {
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiResponse>;
       setIsValidCity(false);
-      toast.error(error.response?.data?.error || "Error occurred");
+      toast.error(axiosError.response?.data?.error || "Error occurred");
       setCityMessage({
         error: true,
-        message: error.response?.data?.error || "Error occurred",
+        message: axiosError.response?.data?.error || "Error occurred",
       });
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     if (formData.city !== city) {
       toast.error("Selected location doesn't match the form city");
@@ -265,6 +265,8 @@ const AddressForm: React.FC = () => {
       imageFiles.forEach((file) => {
         formDataToSend.append("images", file);
       });
+
+      console.log("reached here");
 
       const response = await api.post("/api/pg/post", formDataToSend, {
         headers: {
@@ -295,8 +297,8 @@ const AddressForm: React.FC = () => {
       } else {
         toast.error(response.data.error || "Failed to create PG");
       }
-    } catch (error: any) {
-      console.error("Error creating PG:", error);
+    } catch (error) {
+      console.log("Error creating PG:", error);
 
       if (error instanceof z.ZodError) {
         const newFieldErrors: Partial<Record<keyof FormData, string>> = {};
@@ -307,8 +309,14 @@ const AddressForm: React.FC = () => {
         setFieldErrors(newFieldErrors);
         toast.error("Validation errors occurred. Please check the fields.");
       } else {
-        toast.error(error.response?.data?.message || "Something went wrong!");
+        const axiosError = error as AxiosError<ApiResponse>;
+
+        toast.error(
+          axiosError.response?.data?.message || "Something went wrong!"
+        );
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -346,10 +354,12 @@ const AddressForm: React.FC = () => {
           mapContainerStyle={containerStyle}
           center={center}
           zoom={15}
-          onLoad={(map) => (mapRef.current = map)}
           onDragEnd={handleMapDragEnd}
+          onLoad={(map) => {
+            mapRef.current = map;
+          }}
         >
-          <Marker position={center} marker={markerRef} />
+          <Marker position={center} />
         </GoogleMap>
 
         <button

@@ -7,7 +7,8 @@ export function middleware(req: NextRequest) {
     req.nextUrl.pathname === "/" ||
     req.nextUrl.pathname === "/login" ||
     req.nextUrl.pathname === "/register" ||
-    req.nextUrl.pathname.startsWith("/verify")
+    req.nextUrl.pathname.startsWith("/verify") ||
+    req.nextUrl.pathname.startsWith("/pg")
   ) {
     return NextResponse.next();
   }

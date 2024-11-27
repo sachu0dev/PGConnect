@@ -5,9 +5,10 @@ import {
   loginFailure,
 } from "@/lib/features/user/userSlice";
 import { toast } from "sonner";
+import { AppDispatch } from "../store";
 
 export const loginUser =
-  (email: string, password: string) => async (dispatch: any) => {
+  (email: string, password: string) => async (dispatch: AppDispatch) => {
     dispatch(loginStart());
     try {
       const response = await api.post("/api/auth/login", {
@@ -25,6 +26,8 @@ export const loginUser =
         return true;
       }
     } catch (error) {
+      console.log(error);
+
       dispatch(loginFailure("Invalid credentials"));
       return false;
     }
@@ -32,7 +35,7 @@ export const loginUser =
 
 export const registerUser =
   (username: string, email: string, password: string, phoneNumber: string) =>
-  async (dispatch: any) => {
+  async (dispatch: AppDispatch) => {
     dispatch(loginStart());
     try {
       const response = await api.post("/api/auth/signup", {
@@ -52,6 +55,8 @@ export const registerUser =
         return true;
       }
     } catch (error) {
+      console.log(error);
+
       dispatch(loginFailure("Invalid credentials"));
       return false;
     }

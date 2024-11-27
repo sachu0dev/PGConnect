@@ -6,12 +6,13 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   BadgeDollarSign,
+  Bed,
   Building,
   GitCommitHorizontal,
   User,
 } from "lucide-react";
 import useAuth from "@/hooks/userAuth";
-import { ThemeToggler } from "../specific/ThemeToggler";
+// import { ThemeToggler } from "../specific/ThemeToggler";
 
 const MobileNav = () => {
   const { isNavMenuOpen } = useAppSelector((state: RootState) => state.misc);
@@ -24,15 +25,25 @@ const MobileNav = () => {
   };
 
   return (
-    <div className="flex justify-center relative  ">
+    <div className="flex justify-center relative">
       {isNavMenuOpen && (
         <motion.div
-          className="absolute z-10 w-full max-w-[500px] mx-4 flex flex-col text-black bg-white dark:bg-dark-surface-low  dark:text-slate-400 shadow-md md:hidden"
+          className="absolute z-10 w-full max-w-[500px] mx-4 flex flex-col text-black bg-white dark:bg-dark-surface-low  dark:text-slate-400 shadow-md lg:hidden"
           initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
           {/* Navigation Links */}
           <nav className="flex flex-col w-full">
+            <Link
+              href="/pgs"
+              className="p-4 w-full flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-secondary1-dark/90 transition-colors"
+            >
+              <Bed size={24} />
+              <div className="flex flex-col">
+                <span className="font-semibold text-sm">Find a Pg</span>
+                <span className="text-xs text-gray-500">Get your pg now</span>
+              </div>
+            </Link>
             <Link
               href="/membership"
               className="p-4 w-full flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-secondary1-dark/90 transition-colors"
@@ -86,9 +97,9 @@ const MobileNav = () => {
                 </Link>
               </div>
             )}
-            <div className="flex space-x-2 font-semibold items-center">
+            {/* <div className="flex space-x-2 font-semibold items-center">
               <ThemeToggler />
-            </div>
+            </div> */}
           </div>
         </motion.div>
       )}

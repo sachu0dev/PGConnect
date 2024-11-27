@@ -3,8 +3,9 @@ import { InputOTPPattern } from "@/components/specific/inputOtp";
 import { Button } from "@/components/ui/button";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
+import { ApiResponse } from "@/types/response";
 
 const Page = () => {
   const router = useRouter();
@@ -15,16 +16,14 @@ const Page = () => {
     e.preventDefault();
 
     if (code.length !== 6) {
-      toast({
-        title: "Invalid OTP",
+      toast.warning("Please enter a 6-digit OTP.", {
         description: "Please enter a 6-digit OTP.",
-        variant: "destructive",
       });
       return;
     }
 
     try {
-      const response = await axios.post("/api/auth/verify-code", {
+      const response = await axios.post<ApiResponse>("/api/auth/verify-code", {
         username,
         code,
       });
@@ -37,9 +36,11 @@ const Page = () => {
       }
 
       router.push(`/login`);
-    } catch (error: any) {
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiResponse>;
       toast(
-        error.response.data.message || "Verification failed. Please try again."
+        axiosError?.response?.data.message ||
+          "Verification failed. Please try again."
       );
     }
   };

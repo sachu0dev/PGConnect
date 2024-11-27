@@ -47,6 +47,8 @@ export async function POST() {
 
     return response;
   } catch (error) {
+    console.log("error:", error);
+
     return NextResponse.json(
       { message: "Invalid refresh token", success: false },
       { status: 401 }

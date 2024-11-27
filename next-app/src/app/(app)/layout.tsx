@@ -1,11 +1,10 @@
 "use client";
+import Loader from "@/components/layout/Loader";
+import { useAppSelector } from "@/lib/hooks";
 import { RootState } from "@/lib/store";
+import { Toaster } from "sonner";
 import Header from "../../components/layout/Header";
 import MobileNav from "../../components/layout/MobileNav";
-import Loader from "@/components/layout/Loader";
-import Image from "next/image";
-import { useAppSelector } from "@/lib/hooks";
-import { Toaster } from "sonner";
 
 export default function RootLayout({
   children,

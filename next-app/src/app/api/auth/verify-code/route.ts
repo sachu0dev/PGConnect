@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const updatedUser = await prisma.user.update({
+    await prisma.user.update({
       where: { username },
       data: {
         isVerified: true,

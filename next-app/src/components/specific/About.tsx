@@ -1,14 +1,7 @@
 "use client";
-import React from "react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "../ui/carousel";
-import Image from "next/image";
 import Autoplay from "embla-carousel-autoplay";
+import Image from "next/image";
+import { Carousel, CarouselContent, CarouselItem } from "../ui/carousel";
 
 const About = () => {
   return (
@@ -179,11 +172,11 @@ const About = () => {
             </h1>
             <div className="w-[80px] bg-[#019fe9] h-[4px] mb-4"></div>
             <p className="text-lg">
-              We, at Book My PG, are India's fastest-growing network of managed
-              Paying Guest (PG) rentals. We hope to provide you with the best
-              renting solutions with the help of our designs and technology.Our
-              services across the country will help you find and book Paying
-              Guest (PG) rental homes.
+              We, at Book My PG, are India&lsquo;s fastest-growing network of
+              managed Paying Guest (PG) rentals. We hope to provide you with the
+              best renting solutions with the help of our designs and
+              technology.Our services across the country will help you find and
+              book Paying Guest (PG) rental homes.
             </p>
           </div>
           <div className="flex-1">

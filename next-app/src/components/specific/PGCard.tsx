@@ -1,17 +1,24 @@
 "use client";
+import { motion } from "framer-motion";
+import { Building, MapPin, PersonStanding, User } from "lucide-react";
 import Image from "next/image";
 import React from "react";
-import { motion } from "framer-motion";
-import { Bed, Building, MapPin, PersonStanding, User } from "lucide-react";
-import { IoMdMale, IoMdFemale } from "react-icons/io";
 import { FaGenderless } from "react-icons/fa6";
+import { IoMdFemale, IoMdMale } from "react-icons/io";
+import { PG } from "../../helpers/pgsService";
 import { Button } from "../ui/button";
+import Link from "next/link";
 
-const PGCard = ({ pg }) => {
+interface PGCardProps {
+  pg: PG;
+}
+
+const PGCard: React.FC<PGCardProps> = ({ pg }) => {
   return (
-    <div
+    <Link
+      href={`/pg/${pg.id}`}
       key={pg.id}
-      className="shadow-lg w-full flex justify-between min-h-[280px] max-w-[828px] rounded-xl overflow-hidden"
+      className="shadow-lg w-full flex justify-between min-h-[280px] max-w-[828px] rounded-xl overflow-hidden cursor-pointer"
     >
       <div className="w-1/3  overflow-hidden relative">
         <motion.div
@@ -20,11 +27,11 @@ const PGCard = ({ pg }) => {
           className="h-full "
         >
           <Image
-            src={pg.images[0]}
-            alt={pg.name}
+            src={pg.images?.[0] || "/default-image.jpg"}
+            alt={pg.name || "PG"}
             width={300}
             height={300}
-            className=" h-full  object-cover aspect-square"
+            className="h-full object-cover aspect-square"
           />
         </motion.div>
         <div className="h-8 w-full bg-gradient-to-r bg-primary1 animate-flare absolute bottom-0 flex items-center justify-center text-white">
@@ -39,7 +46,7 @@ const PGCard = ({ pg }) => {
             <span className="text-xs font-medium text-[#7d7d7d] capitalize">
               City: {pg.city}
             </span>
-            <span className="text-xs text-[#7d7d7d] capitalize mt-2 text-ellipsis">
+            <span className="text-xs text-[#7d7d7d] capitalize mt-2 text-ellipsis line-clamp-2">
               Description: {pg.description}
             </span>
           </div>
@@ -100,7 +107,7 @@ const PGCard = ({ pg }) => {
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

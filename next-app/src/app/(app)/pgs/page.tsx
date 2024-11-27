@@ -1,99 +1,133 @@
 "use client";
-
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import Loader from "@/components/layout/Loader";
+import PGCard from "@/components/specific/PGCard";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
-  SelectTrigger,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { Pagination } from "@/components/ui/pagination"; // shadcn pagination component
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
-import PGCard from "@/components/specific/PGCard";
-
-const debounce = (func: Function, delay: number) => {
-  let timer: NodeJS.Timeout;
-  return (...args: any[]) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => func(...args), delay);
-  };
-};
+import {
+  fetchPGs,
+  Pagination as PaginationType,
+  PG,
+} from "../../../helpers/pgsService";
+import Image from "next/image";
+import {
+  GoogleMap,
+  useLoadScript,
+  Marker,
+  Libraries,
+} from "@react-google-maps/api";
+import { LoaderCircle } from "lucide-react";
 
 const SearchPage = () => {
   const searchParams = useSearchParams();
-  const [pgs, setPgs] = useState([]);
+  const [pgs, setPgs] = useState<PG[]>([]);
   const [city, setCity] = useState<string>(searchParams.get("city") || "");
-  const [gender, setGender] = useState<string | null>(null);
-  const [bhk, setBhk] = useState(null);
+  const [gender, setGender] = useState<string | undefined>("");
+  const [bhk, setBhk] = useState<string | undefined>("");
   const [minRent, setMinRent] = useState<string>("");
   const [maxRent, setMaxRent] = useState<string>("");
   const [page, setPage] = useState<number>(1);
-  const [pagination, setPagination] = useState({
+  const [center, setCenter] = useState({ lat: 28.6139, lng: 77.209 });
+  const [pagination, setPagination] = useState<PaginationType>({
     total: 0,
     totalPages: 0,
     hasNextPage: false,
     hasPrevPage: false,
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const fetchPgs = async () => {
-    if (loading) return;
+  const libraries: Libraries = useMemo(() => ["places"], []);
+
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries: libraries,
+  });
+
+  const fetchAndSetPgs = useCallback(async () => {
     setLoading(true);
 
     try {
-      const params = new URLSearchParams({
+      const data = await fetchPGs({
         city,
-        gender: gender || "",
-        bhk: bhk || "",
+        gender,
+        bhk,
         minRent,
         maxRent,
-        page: String(page),
-        limit: "10",
+        page,
+        limit: 10,
       });
-
-      const response = await fetch(`/api/get-pgs?${params.toString()}`);
-      const data = await response.json();
 
       if (data.success) {
         setPgs(data.data);
         setPagination(data.pagination);
+
+        if (data.data.length > 0 && data.data[0].coordinates) {
+          const [lat, lng] = data.data[0].coordinates.split(",").map(Number);
+          setCenter({ lat, lng });
+        }
       } else {
         toast.error(data.error || "Failed to fetch data.");
       }
     } catch (error) {
+      console.log(error);
       toast.error("An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const debouncedFetchPgs = useCallback(debounce(fetchPgs, 500), [
-    city,
-    gender,
-    bhk,
-    minRent,
-    maxRent,
-    page,
-  ]);
-
-  const handleFilterChange = () => {
-    setPage(1);
-    debouncedFetchPgs();
-  };
+  }, [city, gender, bhk, minRent, maxRent, page]);
 
   useEffect(() => {
-    handleFilterChange();
-  }, [city, gender, bhk, minRent, maxRent]);
-
-  useEffect(() => {
-    fetchPgs();
-  }, [page]);
+    fetchAndSetPgs();
+  }, [fetchAndSetPgs]);
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleCardHover = (coordinates: string) => {
+    if (coordinates) {
+      const [lat, lng] = coordinates.split(",").map(Number);
+      setCenter({ lat, lng });
+    }
+  };
+
+  // Render map only when Google Maps API is loaded
+  const renderMap = () => {
+    if (loadError) {
+      return (
+        <div className="flex justify-center items-center w-full h-full">
+          Error loading maps
+        </div>
+      );
+    }
+
+    if (!isLoaded) {
+      return (
+        <div className="flex justify-center items-center w-full h-full">
+          <LoaderCircle className="animate-spin" />
+        </div>
+      );
+    }
+
+    return (
+      <GoogleMap
+        center={center}
+        zoom={15}
+        mapContainerStyle={{ width: "100%", height: "100%" }}
+      >
+        <Marker position={center} />
+      </GoogleMap>
+    );
   };
 
   return (
@@ -101,43 +135,49 @@ const SearchPage = () => {
       {/* Filter Section */}
       <div className="grid gap-4 py-4 md:grid-cols-4 sticky top-0 bg-white z-10">
         <Input
+          type="text"
           placeholder="City"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          className="col-span-1"
         />
-        <Select onValueChange={(value) => setGender(value)} value={gender}>
-          <SelectTrigger>Gender</SelectTrigger>
+
+        <Select value={gender} onValueChange={(value) => setGender(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Gender" />
+          </SelectTrigger>
           <SelectContent>
-            <SelectItem value="null">Any</SelectItem>
+            <SelectItem value="any">Any</SelectItem>
             <SelectItem value="MALE">Male</SelectItem>
             <SelectItem value="FEMALE">Female</SelectItem>
           </SelectContent>
         </Select>
-        <Select onValueChange={(value) => setBhk(value)} value={bhk}>
-          <SelectTrigger>BHK</SelectTrigger>
+
+        <Select value={bhk} onValueChange={(value) => setBhk(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="BHK" />
+          </SelectTrigger>
           <SelectContent>
-            <SelectItem value="null">Any</SelectItem>
+            <SelectItem value="any">Any</SelectItem>
             <SelectItem value="1">1 BHK</SelectItem>
             <SelectItem value="2">2 BHK</SelectItem>
             <SelectItem value="3">3 BHK</SelectItem>
             <SelectItem value="4">4 BHK</SelectItem>
           </SelectContent>
         </Select>
+
         <div className="flex space-x-2">
           <Input
+            type="number"
             placeholder="Min Rent"
             value={minRent}
             onChange={(e) => setMinRent(e.target.value)}
           />
           <Input
+            type="number"
             placeholder="Max Rent"
             value={maxRent}
             onChange={(e) => setMaxRent(e.target.value)}
           />
-          <Button onClick={handleFilterChange} className="w-full md:w-auto">
-            Search
-          </Button>
         </div>
       </div>
 
@@ -152,21 +192,86 @@ const SearchPage = () => {
 
       <div className="flex">
         <div className="flex-1 space-y-6">
-          {pgs.map((pg: any) => (
-            <PGCard key={pg.id} pg={pg} />
-          ))}
+          {!loading ? (
+            pgs.length > 0 ? (
+              pgs.map((pg) => (
+                <div
+                  key={pg.id}
+                  onMouseEnter={() => handleCardHover(pg.coordinates)}
+                >
+                  <PGCard pg={pg} />
+                </div>
+              ))
+            ) : (
+              <div className="flex justify-center flex-col items-center h-[50vh] space-y-4">
+                <Image
+                  src="https://res.cloudinary.com/stanza-living/image/upload/v1654161141/Website%20v5/Common/modal-error.png"
+                  alt="icon"
+                  width={300}
+                  height={300}
+                />
+                <h1 className="text-3xl text-primary1 font-medium">
+                  Keep looking, friend
+                </h1>
+                <div className="flex flex-col justify-center items-center text-lg font-medium">
+                  <span>We couldn&lsquo;t keep up with your filters. </span>
+                  <span>Try expanding your search?</span>
+                </div>
+              </div>
+            )
+          ) : (
+            <div className="flex justify-center items-center h-[50vh]">
+              <Loader />
+            </div>
+          )}
         </div>
-        <div className="bg-black h-[90vh] min-h-0 xl:w-[420px] sticky top-20 rounded-3xl"></div>
+        <div className="bg-slate-100 h-[90vh] hidden md:w-[200px] md:block xl:w-[420px] sticky top-20 rounded-3xl overflow-hidden">
+          {renderMap()}
+        </div>
       </div>
 
-      {/* Pagination */}
-      <div className="flex justify-center mt-6">
-        <Pagination
-          total={pagination.totalPages}
-          current={page}
-          onChange={handlePageChange}
-        />
-      </div>
+      {/* Custom Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 mt-4">
+          <button
+            onClick={() => handlePageChange(page - 1)}
+            disabled={!pagination.hasPrevPage}
+            className={`px-4 py-2 border ${
+              !pagination.hasPrevPage
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-white text-black hover:bg-gray-100"
+            }`}
+          >
+            Previous
+          </button>
+
+          {[...Array(pagination.totalPages)].map((_, index) => (
+            <button
+              key={index}
+              onClick={() => handlePageChange(index + 1)}
+              className={`px-4 py-2 border ${
+                page === index + 1
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-black hover:bg-gray-100"
+              }`}
+            >
+              {index + 1}
+            </button>
+          ))}
+
+          <button
+            onClick={() => handlePageChange(page + 1)}
+            disabled={!pagination.hasNextPage}
+            className={`px-4 py-2 border ${
+              !pagination.hasNextPage
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-white text-black hover:bg-gray-100"
+            }`}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };

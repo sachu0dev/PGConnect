@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  next-app:
+    build:
+      context: ./next-app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_SOCKET_SERVER=http://localhost:4000
+    volumes:
+      - ./next-app:/app
+      - /app/node_modules
+    depends_on:
+      - socket-server
+
+  socket-server:
+    build:
+      context: ./socket-server
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./socket-server:/app
+      - /app/node_modules

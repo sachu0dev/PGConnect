@@ -36,6 +36,8 @@ export default function ClientProvider({
             description: "Token refreshed successfully.",
           });
         } catch (error) {
+          console.log(error);
+
           dispatch(logout());
         } finally {
           dispatch(setLoading(false));

@@ -16,6 +16,6 @@ export const pgFormSchema = z.object({
   description: z
     .string()
     .min(1, "Description is required")
-    .max(200, "Description must be at most 200 characters"),
+    .max(600, "Description must be at most 200 characters"),
   isAcceptingGuest: z.boolean(),
 });

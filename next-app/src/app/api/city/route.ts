@@ -1,4 +1,3 @@
-import { verifyAccessToken } from "@/lib/auth/jwt";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -19,7 +18,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const newCity = await prisma.city.create({
+    await prisma.city.create({
       data: {
         name: parsedCity,
       },
@@ -30,7 +29,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error validating city:", error.message);
+    console.error("Error validating city:", error);
     return NextResponse.json(
       { error: "Internal server error", success: false },
       { status: 500 }

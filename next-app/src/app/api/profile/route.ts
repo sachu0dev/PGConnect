@@ -40,6 +40,8 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    console.log("Error:", error);
+
     return NextResponse.json(
       { error: "Internal server error", success: false },
       { status: 500 }

@@ -13,8 +13,9 @@ const LocationInput = () => {
     cityCount: 0,
     bedCount: 0,
     isLoading: true,
-    error: null,
+    error: null as string | null,
   });
+
   const router = useRouter();
   const [selectedCity, setSelectedCity] = useState("");
   const [isLocating, setIsLocating] = useState(false);
@@ -91,7 +92,8 @@ const LocationInput = () => {
       const data = await response.json();
 
       const cityComponent = data.results[0]?.address_components?.find(
-        (component: any) => component.types.includes("locality")
+        (component: google.maps.GeocoderAddressComponent) =>
+          component.types.includes("locality")
       );
       setSelectedCity(cityComponent?.long_name ?? "");
     } catch (error) {

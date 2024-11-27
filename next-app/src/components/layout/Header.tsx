@@ -2,13 +2,13 @@
 import useAuth from "@/hooks/userAuth";
 import api from "@/lib/axios";
 import { setUser } from "@/lib/features/user/userSlice";
-import { BadgeDollarSign, Building, Menu, User, X } from "lucide-react";
+import { BadgeDollarSign, Bed, Building, Menu, User, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 import { closeNavMenu, openNavMenu } from "../../lib/features/misc/miscSlice";
 import { useAppDispatch, useAppSelector } from "../../lib/hooks";
 import { RootState } from "../../lib/store";
-import { ThemeToggler } from "../specific/ThemeToggler";
+// import { ThemeToggler } from "../specific/ThemeToggler";
 
 const Header = () => {
   const { isNavMenuOpen } = useAppSelector((state: RootState) => state.misc);
@@ -65,10 +65,24 @@ const Header = () => {
           </h1>
         </Link>
       </div>
-      <div className="hidden md:flex  text-black ">
+      <div className="hidden lg:flex  text-black ">
+        <Link
+          href="/pgs"
+          className="h-full flex justify-center space-x-2 border-r border-slate-200 dark:border-slate-800 pr-4 py-4"
+        >
+          <div className="flex items-center">
+            <Bed size={24} color={"#60C3AD"} />
+          </div>
+          <div className="flex flex-col items-center">
+            <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-400">
+              Find a Pg
+            </h3>
+            <span className="text-xs text-slate-500">Get your pg now</span>
+          </div>
+        </Link>
         <Link
           href="/membership"
-          className="h-full flex justify-center space-x-2 border-r border-slate-200 dark:border-slate-800 pr-4 py-4"
+          className="h-full flex justify-center space-x-2 border-r border-slate-200 dark:border-slate-800  p-4"
         >
           <div className="flex items-center">
             <BadgeDollarSign size={24} color={"#60C3AD"} />
@@ -119,9 +133,9 @@ const Header = () => {
               Register to use our services
             </span>
           </div>
-          <div className="flex flex-col items-center border-l border-slate-200 dark:border-slate-800 pl-4 h-full">
+          {/* <div className="flex flex-col items-center border-l border-slate-200 dark:border-slate-800 pl-4 h-full">
             <ThemeToggler />
-          </div>
+          </div> */}
         </div>
       </div>
       {/* <div className="hidden md:flex space-x-20 text-white ">
@@ -151,7 +165,7 @@ const Header = () => {
       </div> */}
       {!isNavMenuOpen && (
         <button
-          className="flex md:hidden text-slate-700 dark:text-slate-400"
+          className="flex lg:hidden text-slate-700 dark:text-slate-400"
           onClick={handelOpen}
         >
           <Menu />
@@ -159,7 +173,7 @@ const Header = () => {
       )}
       {isNavMenuOpen && (
         <button
-          className="flex md:hidden text-slate-700 dark:text-slate-400"
+          className="flex lg:hidden text-slate-700 dark:text-slate-400"
           onClick={handelClose}
         >
           <X />

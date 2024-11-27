@@ -10,17 +10,14 @@ export async function GET(request: NextRequest) {
     const parsedPage = parseInt(searchParams.get("page") || "1", 10);
     const parsedLimit = parseInt(searchParams.get("limit") || "10", 10);
 
-    // Initialize the filters object
     const filters: Record<string, any> = {};
 
-    // If a city is provided, include it in the filter
     if (city) {
       filters.city = { contains: city.toLowerCase(), mode: "insensitive" };
     } else {
       console.log("No city filter applied, fetching all PGs.");
     }
 
-    // Add filters for rent, gender, and bhk if available in the query parameters
     const minRent = searchParams.get("minRent");
     const maxRent = searchParams.get("maxRent");
     const gender = searchParams.get("gender");
@@ -64,7 +61,7 @@ export async function GET(request: NextRequest) {
           address: true,
           coordinates: true,
           rentPerMonth: true,
-
+          isDummy: true,
           bhk: true,
           gender: true,
           capacityCount: true,
@@ -98,7 +95,7 @@ export async function GET(request: NextRequest) {
       pagination,
     });
   } catch (error) {
-    console.error("PG Search Error:", error);
+    console.log("PG Search Error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

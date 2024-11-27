@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error validating city:", error.message);
+    console.error("Error validating city:", error);
     return NextResponse.json(
       { error: "Internal server error", success: false },
       { status: 500 }
