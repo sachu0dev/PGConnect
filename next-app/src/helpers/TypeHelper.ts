@@ -51,3 +51,31 @@ export const fetchPGs = async (params: {
   });
   return response.data;
 };
+
+interface Message {
+  id: string;
+  text: string;
+  sender: {
+    id: string;
+    username: string;
+  };
+}
+
+interface User {
+  id: string;
+  username: string;
+}
+
+interface PGData {
+  id: string;
+  name: string;
+  rentPerMonth: number;
+  address: string;
+  owner: User;
+}
+
+export interface ChatData {
+  id: string;
+  messages: Message[];
+  pg: PGData;
+}

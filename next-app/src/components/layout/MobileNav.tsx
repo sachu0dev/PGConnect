@@ -9,6 +9,7 @@ import {
   Bed,
   Building,
   GitCommitHorizontal,
+  LogOut,
   User,
 } from "lucide-react";
 import useAuth from "@/hooks/userAuth";
@@ -76,13 +77,12 @@ const MobileNav = () => {
                 <Link href="/profile" className="hover:underline">
                   {userData.username}
                 </Link>
-                <GitCommitHorizontal className="rotate-90" aria-hidden="true" />
                 <button
                   onClick={logoutHandler}
                   className="cursor-pointer hover:underline text-red-500"
                   aria-label="Logout"
                 >
-                  Logout
+                  <LogOut size={20} />
                 </button>
               </div>
             ) : (

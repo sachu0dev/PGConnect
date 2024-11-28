@@ -28,7 +28,6 @@ export default function ClientProvider({
         try {
           dispatch(setLoading(true));
           toast("Refreshing token...");
-          console.log("Attempting to refresh token...");
           const response = await api.post("/api/auth/refresh");
           const newAccessToken = response.data.accessToken;
           dispatch(refreshUser(newAccessToken));

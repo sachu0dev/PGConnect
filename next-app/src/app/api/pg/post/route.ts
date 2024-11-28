@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error handling POST request:", error);
+    console.log("Error handling POST request:", error);
     if (error instanceof Error && error.message.includes("Unique constraint")) {
       return NextResponse.json(
         { error: "A PG with these details already exists", success: false },

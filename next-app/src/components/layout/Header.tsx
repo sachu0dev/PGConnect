@@ -2,7 +2,17 @@
 import useAuth from "@/hooks/userAuth";
 import api from "@/lib/axios";
 import { setUser } from "@/lib/features/user/userSlice";
-import { BadgeDollarSign, Bed, Building, Menu, User, X } from "lucide-react";
+import {
+  BadgeDollarSign,
+  Bed,
+  Building,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Minus,
+  User,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 import { closeNavMenu, openNavMenu } from "../../lib/features/misc/miscSlice";
@@ -25,27 +35,29 @@ const Header = () => {
     dispatch(openNavMenu());
   };
 
-  const fetchUserProfile = async () => {
-    if (!accessToken) {
-      console.log("Access token is missing, waiting for refresh...");
-      return;
-    }
-    try {
-      const response = await api.get("/api/profile");
-      const user = response.data.User;
-      console.log(user);
-      dispatch(setUser(user));
-    } catch (error) {
-      console.log("Error fetching user profile", error);
-    }
-  };
-
   useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!accessToken) {
+        return;
+      }
+
+      try {
+        const response = await api.get("/api/profile");
+
+        const user = response.data.User;
+
+        console.log(user);
+
+        dispatch(setUser(user));
+      } catch (error) {
+        console.log("Error fetching user profile", error);
+      }
+    };
+
     if (!loading && accessToken) {
       fetchUserProfile();
     }
-  }, [loading]);
-
+  }, [loading, accessToken, dispatch]);
   const handelClose = () => {
     dispatch(closeNavMenu());
   };
@@ -78,6 +90,20 @@ const Header = () => {
               Find a Pg
             </h3>
             <span className="text-xs text-slate-500">Get your pg now</span>
+          </div>
+        </Link>
+        <Link
+          href="/dashboard"
+          className="h-full flex justify-center space-x-2 border-r border-slate-200 dark:border-slate-800  p-4"
+        >
+          <div className="flex items-center">
+            <LayoutDashboard size={24} color={"#60C3AD"} />
+          </div>
+          <div className="flex flex-col items-center">
+            <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-400">
+              For Pg Owners
+            </h3>
+            <span className="text-xs text-slate-500">Mannage your Pgs</span>
           </div>
         </Link>
         <Link
@@ -115,18 +141,35 @@ const Header = () => {
           <div className="flex flex-col items-center ">
             {userData ? (
               <div className="hidden md:flex space-x-2  font-semibold text-sm text-slate-700 dark:text-slate-400">
-                <Link href="/profile">{userData.username}</Link>
-                <span>/</span>
-                <div onClick={logoutHandler} className="cursor-pointer ">
-                  Logout
+                <Link
+                  href="/profile"
+                  className="font-semibold text-sm text-slate-700 dark:text-slate-400"
+                >
+                  {userData.username}
+                </Link>
+                <div
+                  onClick={logoutHandler}
+                  className="cursor-pointer text-red-400"
+                >
+                  <LogOut size={20} />
                 </div>
               </div>
             ) : (
               <div className="hidden md:flex space-x-2   font-semibold text-smtext-slate-700 dark:text-slate-400">
-                <Link href="/login">Login</Link>
-                <span>/</span>
+                <Link
+                  href="/login"
+                  className="font-semibold text-sm text-slate-700 dark:text-slate-400"
+                >
+                  Login
+                </Link>
+                <Minus className="rotate-90 text-sm text-slate-700 dark:text-slate-400" />
 
-                <Link href="/register">Sign up</Link>
+                <Link
+                  href="/register"
+                  className="font-semibold text-sm text-slate-700 dark:text-slate-400"
+                >
+                  Sign up
+                </Link>
               </div>
             )}
             <span className="text-xs text-slate-500">

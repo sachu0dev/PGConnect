@@ -45,8 +45,6 @@ export const registerUser =
         phoneNumber,
       });
 
-      console.log(response.data);
-
       if (!response.data.success) {
         toast(response.data.message);
         return false;

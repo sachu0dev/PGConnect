@@ -14,6 +14,7 @@ import { z } from "zod";
 import api from "@/lib/axios";
 import { AxiosError } from "axios";
 import { ApiResponse } from "@/types/response";
+import Image from "next/image";
 
 const containerStyle = {
   width: "100%",
@@ -113,7 +114,7 @@ const AddressForm: React.FC = () => {
         }));
       }
     } catch (error) {
-      console.error("Error fetching address:", error);
+      console.log("Error fetching address:", error);
     }
   }, [center]);
 
@@ -265,8 +266,6 @@ const AddressForm: React.FC = () => {
       imageFiles.forEach((file) => {
         formDataToSend.append("images", file);
       });
-
-      console.log("reached here");
 
       const response = await api.post("/api/pg/post", formDataToSend, {
         headers: {
@@ -561,10 +560,12 @@ const AddressForm: React.FC = () => {
           <div className="grid grid-cols-3 gap-4 mt-4">
             {imagePreviews.map((image, index) => (
               <div key={index} className="relative group">
-                <img
+                <Image
                   src={image}
                   alt={`Preview ${index}`}
                   className="w-full h-32 object-cover rounded shadow"
+                  width={500}
+                  height={300}
                 />
                 <button
                   type="button"

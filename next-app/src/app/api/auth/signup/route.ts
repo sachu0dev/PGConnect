@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error registering user:", error);
+    console.log("Error registering user:", error);
     return new Response(
       JSON.stringify({ success: false, message: "Error registering user" }),
       { status: 500 }

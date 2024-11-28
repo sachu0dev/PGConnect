@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       success: true,
     });
   } catch (error) {
-    console.error("Google OAuth Error:", error);
+    console.log("Google OAuth Error:", error);
     return NextResponse.json(
       { error: "Authentication failed", success: false },
       { status: 401 }

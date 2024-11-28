@@ -16,7 +16,7 @@ export default function GoogleButton() {
       <GoogleLogin
         onSuccess={onSuccess}
         onError={() => {
-          console.error("Login Failed");
+          console.log("Login Failed");
         }}
         useOneTap
         shape="rectangular"

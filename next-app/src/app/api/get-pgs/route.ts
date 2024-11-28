@@ -1,19 +1,23 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, Gender } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
-
     const city = searchParams.get("city");
-
     const parsedPage = parseInt(searchParams.get("page") || "1", 10);
     const parsedLimit = parseInt(searchParams.get("limit") || "10", 10);
 
-    const filters: Record<string, any> = {};
+    const filters: Prisma.PgWhereInput = {
+      isAcceptingGuest: true,
+    };
 
     if (city) {
-      filters.city = { contains: city.toLowerCase(), mode: "insensitive" };
+      filters.city = {
+        contains: city.toLowerCase(),
+        mode: "insensitive",
+      };
     } else {
       console.log("No city filter applied, fetching all PGs.");
     }
@@ -23,29 +27,21 @@ export async function GET(request: NextRequest) {
     const gender = searchParams.get("gender");
     const bhk = searchParams.get("bhk");
 
-    if (minRent) {
+    if (minRent || maxRent) {
       filters.rentPerMonth = {
-        ...filters.rentPerMonth,
-        gte: parseFloat(minRent),
-      };
-    }
-
-    if (maxRent) {
-      filters.rentPerMonth = {
-        ...filters.rentPerMonth,
-        lte: parseFloat(maxRent),
+        ...(minRent ? { gte: parseFloat(minRent) } : {}),
+        ...(maxRent ? { lte: parseFloat(maxRent) } : {}),
       };
     }
 
     if (gender && gender !== "null") {
-      filters.gender = gender;
+      // Explicitly convert to Gender type
+      filters.gender = gender as Gender;
     }
 
     if (bhk && bhk !== "null") {
       filters.bhk = parseInt(bhk, 10);
     }
-
-    filters.isAcceptingGuest = true;
 
     const [totalCount, pgs] = await Promise.all([
       prisma.pg.count({ where: filters }),

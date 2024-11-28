@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     try {
       decodedToken = verifyAccessToken(token);
     } catch (error) {
-      console.error("Token verification failed:", error);
+      console.log("Token verification failed:", error);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
     }
 
     const { city } = await req.json();
-    console.log("City received:", city);
 
     const parsedCity = city.trim().toLowerCase();
 
@@ -55,7 +54,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error validating city:", error);
+    console.log("Error validating city:", error);
     return NextResponse.json(
       { error: "Internal server error", success: false },
       { status: 500 }

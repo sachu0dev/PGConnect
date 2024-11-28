@@ -5,13 +5,12 @@ let prisma: PrismaClient;
 if (process.env.NODE_ENV === "production") {
   prisma = new PrismaClient();
 } else {
-  // @ts-ignore
+  // @ts-expect-error just ignore this
   if (!global.prisma) {
-    // @ts-ignore
+    // @ts-expect-error just ignore this
     global.prisma = new PrismaClient();
   }
-  // @ts-ignore
-
+  // @ts-expect-error just ignore this
   prisma = global.prisma;
 }
 

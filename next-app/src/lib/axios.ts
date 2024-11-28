@@ -27,7 +27,6 @@ const subscribeTokenRefresh = (callback: (token: string) => void) => {
 
 api.interceptors.request.use((config) => {
   const accessToken = getAccessToken();
-  console.log(accessToken);
 
   if (accessToken && config.headers) {
     config.headers.Authorization = `Bearer ${accessToken}`;

@@ -97,7 +97,7 @@ const LocationInput = () => {
       );
       setSelectedCity(cityComponent?.long_name ?? "");
     } catch (error) {
-      console.error("Error getting location:", error);
+      console.log("Error getting location:", error);
     } finally {
       setIsLocating(false);
     }

@@ -6,6 +6,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import ClientProvider from "./providers/ClientProvider";
 import StoreProvider from "./providers/StoreProvider";
 import { ThemeProvider } from "./providers/ThemeProvider";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -44,7 +45,7 @@ export default function RootLayout({
               <GoogleOAuthProvider
                 clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
               >
-                {children}
+                <TooltipProvider>{children}</TooltipProvider>
               </GoogleOAuthProvider>
             </ClientProvider>
           </ThemeProvider>

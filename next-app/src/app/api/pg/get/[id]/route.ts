@@ -1,15 +1,11 @@
-// app/[id]/route.ts
-
 import prisma from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-// This will match the dynamic route [id]
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
-
+  const { id } = await context.params;
   try {
     const pgData = await prisma.pg.findUnique({
       where: {
@@ -42,6 +38,10 @@ export async function GET(
     });
 
     if (!pgData) {
+      return NextResponse.json(
+        { message: "Data not found", success: false },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(
@@ -50,7 +50,6 @@ export async function GET(
     );
   } catch (error) {
     console.log(error);
-
     return NextResponse.json(
       { error: "Internal server error", success: false },
       { status: 500 }
