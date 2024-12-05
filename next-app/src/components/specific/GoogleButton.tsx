@@ -21,6 +21,7 @@ export default function GoogleButton() {
         useOneTap
         shape="rectangular"
         locale="en"
+        use_fedcm_for_prompt={false}
       />
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>

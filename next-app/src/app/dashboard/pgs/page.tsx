@@ -79,7 +79,8 @@ const Page = () => {
                           src={pg.images[0]}
                           alt={pg.name}
                           className="w-full h-full object-cover"
-                          fill
+                          width={500}
+                          height={300}
                         />
                       ) : (
                         <div className="w-full h-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">

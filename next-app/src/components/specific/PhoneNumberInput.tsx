@@ -102,35 +102,33 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
               <DialogTitle className="text-primary1">
                 Enter phone number
               </DialogTitle>
-              <DialogDescription>
-                <form onSubmit={handleSubmit} noValidate>
-                  <Input
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    placeholder="Enter phone number"
-                    aria-label="Phone number"
-                    className="mt-4"
-                    type="tel"
-                    autoComplete="tel"
-                  />
-                  {error && (
-                    <p
-                      className="text-red-500 mt-2"
-                      role="alert"
-                      aria-live="polite"
-                    >
-                      {error}
-                    </p>
-                  )}
-                  <Button
-                    type="submit"
-                    className="mt-4 w-full bg-primary1 text-white font-semibold hover:bg-primary1/90"
-                    disabled={isLoading}
+              <form onSubmit={handleSubmit} noValidate>
+                <Input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  placeholder="Enter phone number"
+                  aria-label="Phone number"
+                  className="mt-4"
+                  type="tel"
+                  autoComplete="tel"
+                />
+                {error && (
+                  <span
+                    className="text-red-500 mt-2"
+                    role="alert"
+                    aria-live="polite"
                   >
-                    {isLoading ? "Submitting..." : "Request Callback"}
-                  </Button>
-                </form>
-              </DialogDescription>
+                    {error}
+                  </span>
+                )}
+                <Button
+                  type="submit"
+                  className="mt-4 w-full bg-primary1 text-white font-semibold hover:bg-primary1/90"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Submitting..." : "Request Callback"}
+                </Button>
+              </form>
             </>
           ) : (
             <>

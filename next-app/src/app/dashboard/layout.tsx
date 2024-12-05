@@ -5,13 +5,16 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Building, LogOut, MessageSquare, User } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const links = [
     {
       label: "Pgs",
@@ -42,6 +45,11 @@ export default function DashboardLayout({
       ),
     },
   ];
+
+  useEffect(() => {
+    toast("This feature is coming soon");
+    router.push("/");
+  }, [router]);
   const [open, setOpen] = useState(false);
 
   return (
