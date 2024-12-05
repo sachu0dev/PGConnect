@@ -427,8 +427,16 @@ const Page = () => {
         </section>
 
         <section className="mt-6">
+          <h2 className="text-2xl font-semibold mb-4">14. Governing Law</h2>
+          <p>
+            These terms are governed by the laws of India, with exclusive
+            jurisdiction in The Supreme Court.
+          </p>
+        </section>
+
+        <section className="mt-6">
           <h2 className="text-2xl font-semibold mb-4">
-            14. Contact Information
+            15. Contact Information
           </h2>
           <p>
             If you have any questions or concerns about these Terms and
