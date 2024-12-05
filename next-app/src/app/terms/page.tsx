@@ -273,7 +273,8 @@ const Page = () => {
             </li>
             <li>
               In case of any refunds approved by SUSHIL KUMAR, it will take 10
-              days for the refund to be processed to you .
+              days for the refund to be processed to you in your original
+              payment method.
             </li>
           </ul>
         </section>
