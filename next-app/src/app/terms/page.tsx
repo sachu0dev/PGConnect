@@ -39,7 +39,9 @@ const Page = () => {
               <ul className="list-disc ml-6">
                 <li>Users can request callbacks</li>
                 <li>Callback requests visible in PG owner dashboard</li>
-                <li>Callback details sent to PG owner's registered email</li>
+                <li>
+                  Callback details sent to PG owner&apos;s registered email
+                </li>
               </ul>
             </li>
             <li>No advertising capabilities</li>
@@ -215,7 +217,7 @@ const Page = () => {
           <ul className="list-disc ml-6">
             <li>Provide accurate information</li>
             <li>Not misuse the platform</li>
-            <li>Respect other users' privacy</li>
+            <li>Respect other users&apos; privacy</li>
             <li>Comply with local laws and regulations</li>
             <li>
               Adhere to listing limits and features of their chosen membership
