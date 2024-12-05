@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  context: { params: { chatId: string } }
+  context: { params: Promise<{ chatId: string }> }
 ) {
-  const { chatId } = context.params;
+  const { chatId } = await context.params;
 
   try {
     const authResult = await authenticateRequest(req);

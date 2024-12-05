@@ -8,7 +8,7 @@ export async function sendVerificationEmail(
 ) {
   try {
     await resend.emails.send({
-      from: "PGConnect@sushilcode.lol",
+      from: "VerificationCode@pgconnect.site",
       to: email,
       subject: "PGConnect - Verification Code",
       react: VerificationEmail({ username, otp: verifyCode }),

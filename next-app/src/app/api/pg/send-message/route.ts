@@ -25,6 +25,13 @@ export async function POST(req: NextRequest) {
       where: { id: pgId },
     });
 
+    if (checkPg?.ownerId === userId) {
+      return NextResponse.json(
+        { error: "You can't send message to your own PG", success: false },
+        { status: 403 }
+      );
+    }
+
     if (!checkPg) {
       return NextResponse.json(
         { error: "PG not found", success: false },

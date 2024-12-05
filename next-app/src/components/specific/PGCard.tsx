@@ -8,16 +8,14 @@ import { FaGenderless } from "react-icons/fa6";
 import { IoMdFemale, IoMdMale } from "react-icons/io";
 import { PG } from "../../helpers/TypeHelper";
 import CustumToolTip from "../shared/CustumToolTip";
-import IntailChatDialog from "./InitialChatlDailog";
+import { Button } from "../ui/button";
 import PhoneNumberInput from "./PhoneNumberInput";
-import { useAppSelector } from "@/lib/hooks";
 
 interface PGCardProps {
   pg: PG;
 }
 
 const PGCard: React.FC<PGCardProps> = ({ pg }) => {
-  const { userData } = useAppSelector((state) => state.user);
   return (
     <div className="shadow-lg w-full flex justify-between min-h-[280px] max-w-[828px] rounded-xl overflow-hidden cursor-pointer">
       <div className="w-1/3 overflow-hidden relative">
@@ -108,11 +106,14 @@ const PGCard: React.FC<PGCardProps> = ({ pg }) => {
               </div>
             </div>
             <div className="flex space-x-2">
-              <IntailChatDialog
+              <Button className="bg-primary1 text-white font-semibold text-sm hover:bg-primary1/90 z-10">
+                Bookmark for later
+              </Button>
+              {/* <IntailChatDialog
                 pgId={pg.id}
                 chatId={`${pg.id}${userData?.id}`}
                 classname="w-[175px]"
-              />
+              /> */}
               <PhoneNumberInput pgId={pg.id} classname="w-[175px]" />
             </div>
           </div>

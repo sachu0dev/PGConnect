@@ -17,3 +17,5 @@ dist/
 *.swp
 
 nodemon-debug.log
+
+server.log

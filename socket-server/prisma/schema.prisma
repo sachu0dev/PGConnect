@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  username           String    @unique
+  email              String    @unique
+  password           String?
+  phoneNumber        String?
+  verifyCode         String?
+  verifyCodeExpireAt DateTime?
+  isVerified         Boolean   @default(false)
+  googleId           String?   @unique
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  Pg              Pg[]
+  Message         Message[]
+  callbackRequest callbackRequest[]
+}
+
+model Pg {
+  id               String   @id @default(uuid())
+  name             String
+  contact          String
+  city             String
+  address          String
+  rentPerMonth     Float
+  description      String
+  capacity         Int
+  capacityCount    Int      @default(0)
+  images           String[]
+  bhk              Int
+  isDummy          Boolean  @default(false)
+  isAcceptingGuest Boolean  @default(true)
+  gender           Gender
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  coordinates     String
+  ChatRoom        ChatRoom[]
+  callbackRequest callbackRequest[]
+}
+
+model City {
+  id   String @id @default(uuid())
+  name String @unique
+}
+
+model callbackRequest {
+  id          String @id @default(uuid())
+  phoneNumber String
+  userId      String
+  pgId        String
+  user        User   @relation(fields: [userId], references: [id])
+  pg          Pg     @relation(fields: [pgId], references: [id])
+}
+
+model ChatRoom {
+  id       String    @id
+  pgId     String
+  pg       Pg        @relation(fields: [pgId], references: [id])
+  messages Message[]
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  chatRoomId String
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
+  senderId   String
+  sender     User     @relation(fields: [senderId], references: [id])
+  text       String
+  createdAt  DateTime @default(now())
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  ANY
+}

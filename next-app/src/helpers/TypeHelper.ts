@@ -45,6 +45,7 @@ export const fetchPGs = async (params: {
   maxRent?: string;
   page: number;
   limit: number;
+  payload?: string;
 }): Promise<FetchPGsResponse> => {
   const response = await axios.get<FetchPGsResponse>("/api/get-pgs", {
     params,

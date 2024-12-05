@@ -4,9 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  context: { params: { chatId: string } }
+  context: { params: Promise<{ chatId: string }> }
 ) {
-  const { chatId } = context.params;
+  const { searchParams } = req.nextUrl;
+  const { chatId } = await context.params;
+
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = 20;
 
   try {
     const authResult = await authenticateRequest(req);
@@ -21,14 +25,22 @@ export async function GET(
       );
     }
 
+    const totalMessageCount = await prisma.message.count({
+      where: { chatRoomId: chatId },
+    });
+
     const ChatRoom = await prisma.chatRoom.findUnique({
       where: { id: chatId },
       select: {
         id: true,
         messages: {
+          take: limit,
+          skip: (page - 1) * limit,
+          orderBy: { createdAt: "desc" },
           select: {
             id: true,
             text: true,
+            createdAt: true,
             sender: {
               select: {
                 id: true,
@@ -61,10 +73,22 @@ export async function GET(
       );
     }
 
+    const totalPages = Math.ceil(totalMessageCount / limit);
+
     return NextResponse.json(
       {
         message: "Chat data fetched successfully",
-        data: ChatRoom,
+        data: {
+          ...ChatRoom,
+          messages: ChatRoom.messages.reverse(),
+        },
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalMessages: totalMessageCount,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1,
+        },
         success: true,
       },
       { status: 200 }

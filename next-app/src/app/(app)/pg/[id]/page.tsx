@@ -22,6 +22,8 @@ import { FaGenderless } from "react-icons/fa6";
 import { IoMdFemale, IoMdMale } from "react-icons/io";
 import { toast } from "sonner";
 import { useAppSelector } from "@/lib/hooks";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 // Define types for map configuration
 const mapContainerStyle = {
@@ -40,6 +42,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const [id] = useState<string>(resolvedParams.id);
   const [pgData, setPGData] = useState<PG | null>();
   const [center, setCenter] = useState(defaultCenter);
+  const [isOwner, setIsOwner] = useState(false);
 
   const libraries: Libraries = useMemo(() => ["places"], []);
 
@@ -60,6 +63,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       const response = await axios.get<ApiResponse<PG>>(`/api/pg/get/${id}`);
 
       if (response.data.success) {
+        console.log(response.data.data);
+        if (response.data.data.owner.id === userData?.id) {
+          setIsOwner(true);
+        }
+
         setPGData(response.data.data);
         if (response.data.data.coordinates) {
           const [lat, lng] = response.data.data.coordinates
@@ -74,7 +82,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, userData?.id]);
 
   const handleShareLink = () => {
     if (baseUrl) {
@@ -200,15 +208,25 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                     {pgData?.owner.username}
                   </h1>
                 </div>
-                <div className="flex flex-col space-y-4 items-center w-full ">
-                  <IntailChatDialog
-                    pgId={id}
-                    chatId={`${id}${userData?.id}`}
-                    classname="w-full"
-                  />
+                {isOwner ? (
+                  <div className="flex flex-col space-y-4 items-center w-full ">
+                    <Link href={`/dashboard/pgs/${id}`} className="w-full">
+                      <Button className="w-full bg-primary1 text-white hover:bg-primary1/90">
+                        Go to dashboard
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="flex flex-col space-y-4 items-center w-full ">
+                    <IntailChatDialog
+                      pgId={id}
+                      chatId={`${id}${userData?.id}`}
+                      classname="w-full"
+                    />
 
-                  <PhoneNumberInput pgId={id} classname="w-full" />
-                </div>
+                    <PhoneNumberInput pgId={id} classname="w-full" />
+                  </div>
+                )}
               </div>
             </div>
             <div className="w-full flex justify-center items-center bg-slate-100 text-slate-600 py-2 rounded-lg">

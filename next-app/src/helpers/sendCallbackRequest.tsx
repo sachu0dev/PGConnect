@@ -17,9 +17,9 @@ export async function sendCallbackRequest({
 }: EmailProps) {
   try {
     await resend.emails.send({
-      from: "PGConnect@sushilcode.lol",
+      from: "CallbackRequest@pgconnect.site",
       to: email,
-      subject: "PGConnect - Verification Code",
+      subject: "PGConnect - Callback Request",
       react: CallbackEmail({
         PhoneNumber,
         detailsLink,

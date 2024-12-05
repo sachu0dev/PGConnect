@@ -5,6 +5,7 @@ import { RootState } from "@/lib/store";
 import { Toaster } from "sonner";
 import Header from "../../components/layout/Header";
 import MobileNav from "../../components/layout/MobileNav";
+import Footer from "@/components/layout/Footer";
 
 export default function RootLayout({
   children,
@@ -24,6 +25,7 @@ export default function RootLayout({
           <Header />
           <MobileNav />
           {children}
+          <Footer />
         </>
       )}
       <Toaster />

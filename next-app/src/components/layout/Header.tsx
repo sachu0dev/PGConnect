@@ -46,8 +46,6 @@ const Header = () => {
 
         const user = response.data.User;
 
-        console.log(user);
-
         dispatch(setUser(user));
       } catch (error) {
         console.log("Error fetching user profile", error);
