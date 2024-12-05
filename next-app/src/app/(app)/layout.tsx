@@ -2,10 +2,11 @@
 import Loader from "@/components/layout/Loader";
 import { useAppSelector } from "@/lib/hooks";
 import { RootState } from "@/lib/store";
-import { Toaster } from "sonner";
+import { toast, Toaster } from "sonner";
 import Header from "../../components/layout/Header";
 import MobileNav from "../../components/layout/MobileNav";
 import Footer from "@/components/layout/Footer";
+import { useEffect } from "react";
 
 export default function RootLayout({
   children,
@@ -13,6 +14,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const loading = useAppSelector((state: RootState) => state.user.loading);
+
+  useEffect(() => {
+    toast("This application is still in development phase. ignore any errors.");
+  }, []);
 
   return (
     <>
