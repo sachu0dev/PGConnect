@@ -17,7 +17,7 @@ const Page = () => {
 
   const fetchOwnersPgs = async () => {
     try {
-      const response = await api.get<ApiResponse<Pg[]>>("/api/admin/pgs");
+      const response = await api.get<ApiResponse<Pg[]>>("/api/dashboard/pgs");
       if (response.data.success) {
         setPgsData(response.data.data);
       }

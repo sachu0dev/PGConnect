@@ -5,16 +5,13 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Building, LogOut, MessageSquare, User } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import { toast } from "sonner";
+import React, { useState } from "react";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const links = [
     {
       label: "Pgs",
@@ -46,21 +43,17 @@ export default function DashboardLayout({
     },
   ];
 
-  useEffect(() => {
-    toast("This feature is coming soon");
-    router.push("/");
-  }, [router]);
   const [open, setOpen] = useState(false);
 
   return (
     <div
       className={cn(
-        "rounded-md flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1  mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
+        "rounded-md flex flex-col md:flex-row bg-primary1/10  w-full flex-1  mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
         "h-screen"
       )}
     >
       <Sidebar open={open} setOpen={setOpen}>
-        <SidebarBody className="justify-between gap-10">
+        <SidebarBody className="justify-between gap-10 ">
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
             {open ? <Logo /> : <LogoIcon />}
             <div className="mt-8 flex flex-col gap-2">
