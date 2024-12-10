@@ -53,10 +53,11 @@ export async function POST(req: NextRequest) {
     });
 
     if (!isValidCity) {
-      return NextResponse.json(
-        { error: "City not found", success: false },
-        { status: 404 }
-      );
+      await prisma.city.create({
+        data: {
+          name: parsedCity,
+        },
+      });
     }
 
     const newPG = await prisma.pg.create({

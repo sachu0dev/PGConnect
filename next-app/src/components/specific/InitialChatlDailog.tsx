@@ -121,24 +121,23 @@ const IntailChatDialog: React.FC<InputProps> = ({
               <DialogTitle className="text-primary1">
                 Send your first message
               </DialogTitle>
-              <DialogDescription>
-                <form onSubmit={handleSubmit} noValidate>
-                  <Input
-                    id="message"
-                    name="message"
-                    placeholder="Message"
-                    className="mt-4"
-                    type="text"
-                  />
-                  <Button
-                    type="submit"
-                    className="mt-4 w-full bg-primary1 text-white font-semibold hover:bg-primary1/90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Sending..." : "Send Message"}
-                  </Button>
-                </form>
-              </DialogDescription>
+
+              <form onSubmit={handleSubmit} noValidate>
+                <Input
+                  id="message"
+                  name="message"
+                  placeholder="Message"
+                  className="mt-4"
+                  type="text"
+                />
+                <Button
+                  type="submit"
+                  className="mt-4 w-full bg-primary1 text-white font-semibold hover:bg-primary1/90"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Sending..." : "Send Message"}
+                </Button>
+              </form>
             </>
           ) : (
             <>

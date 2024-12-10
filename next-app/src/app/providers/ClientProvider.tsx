@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { refreshUser, logout, setLoading } from "@/lib/features/user/userSlice";
+import api from "@/lib/axios";
+import { logout, refreshUser, setLoading } from "@/lib/features/user/userSlice";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { RootState } from "@/lib/store";
 import { useRouter } from "next/navigation";
-import api from "@/lib/axios";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { toast } from "sonner";
+import { useEffect, useRef } from "react";
 
 export default function ClientProvider({
   children,
@@ -27,13 +26,10 @@ export default function ClientProvider({
         hasRefreshedToken.current = true;
         try {
           dispatch(setLoading(true));
-          toast("Refreshing token...");
+
           const response = await api.post("/api/auth/refresh");
           const newAccessToken = response.data.accessToken;
           dispatch(refreshUser(newAccessToken));
-          toast("Successfully refreshed token.", {
-            description: "Token refreshed successfully.",
-          });
         } catch (error) {
           console.log(error);
 

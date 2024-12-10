@@ -18,6 +18,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import api from "@/lib/axios";
 import { ApiResponse } from "@/types/response";
 import { ChatRoom, Pg } from "@prisma/client";
@@ -25,11 +30,13 @@ import {
   CircleX,
   ImagePlus,
   LoaderCircle,
+  Mails,
   Pencil,
   Save,
   X,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -40,10 +47,22 @@ interface ExtendedPg extends Pg {
   };
 }
 
+interface ExtendedChatRoom extends ChatRoom {
+  id: string;
+  userId: string;
+  pgId: string;
+  user: {
+    id: string;
+    username: string;
+  };
+  messageCount: number;
+}
+
 const Page = () => {
   const params = useParams();
   const { id } = params;
   const [pgData, setPgData] = useState<ExtendedPg | null>(null);
+  const [chatRooms, setChatRooms] = useState<ExtendedChatRoom[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [images, setImages] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -66,13 +85,14 @@ const Page = () => {
   const fetchPgDetails = useCallback(async () => {
     try {
       const response = await api.get<
-        ApiResponse<{ pg: ExtendedPg; chatRooms: ChatRoom[] }>
+        ApiResponse<{ pg: ExtendedPg; chatRooms: ExtendedChatRoom[] }>
       >(`/api/dashboard/pg/${id}`);
 
       console.log(response.data);
 
-      if (response.data.success) {
+      if (response.data.success && response.data.data) {
         setPgData(response.data.data.pg);
+        setChatRooms(response.data.data.chatRooms);
         setImages(response.data.data.pg.images);
       }
     } catch (error) {
@@ -247,7 +267,7 @@ const Page = () => {
           <div className="p-4  ">
             {!pgData ? (
               <div>
-                <LoaderCircle className="animate-spin" />
+                <h1 className="text-2xl font-semibold">Pg not found</h1>
               </div>
             ) : (
               <div className="p-4 border border-neutral-200 dark:border-neutral-700 ">
@@ -492,7 +512,7 @@ const Page = () => {
                         onChange={(e) => setDescription(e.target.value)}
                       />
                     ) : (
-                      <div className="p-2 font-medium">
+                      <div className="p-2 font-medium text-ellipsis">
                         {pgData?.description}
                       </div>
                     )}
@@ -591,6 +611,43 @@ const Page = () => {
                     </div>
                   </div>
                 </div>
+                {chatRooms.length > 0 && (
+                  <div className="mt-4">
+                    <div className="border border-neutral-200 p-2 dark:border-neutral-700">
+                      <div className="flex justify-between items-center">
+                        <h1 className="text-xl font-medium text-[#354052]">
+                          Pg Chats
+                        </h1>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2  gap-4 mt-4">
+                        {chatRooms.map((room) => (
+                          <Tooltip key={room.id}>
+                            <TooltipTrigger>
+                              <Link
+                                key={room.id}
+                                href={`/chat/${room.id}`}
+                                className="w-ful"
+                              >
+                                <div className="border flex justify-between items-center p-2 border-neutral-200 dark:border-neutral-700 font-medium">
+                                  <span>{room.user.username}</span>
+                                  {room.messageCount > 0 && (
+                                    <span className="flex  text-primary1">
+                                      <Mails className="mr-2" />{" "}
+                                      {room.messageCount}
+                                    </span>
+                                  )}
+                                </div>
+                              </Link>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{room.messageCount} unread messages</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <Dialog
                   open={showImageUploadDialog}

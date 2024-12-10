@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import {
   fetchPGs,
   Pagination as PaginationType,
-  PG,
 } from "../../helpers/TypeHelper";
 import Image from "next/image";
 import {
@@ -24,10 +23,20 @@ import {
   Libraries,
 } from "@react-google-maps/api";
 import { LoaderCircle } from "lucide-react";
+import { Pg } from "@prisma/client";
+
+interface ExtendedPg extends Pg {
+  contact: string;
+  isDummy: boolean;
+  isAcceptingGuest: boolean;
+  updatedAt: Date;
+  ownerId: string;
+}
 
 const SearchPage = () => {
   const searchParams = useSearchParams();
-  const [pgs, setPgs] = useState<PG[]>([]);
+  const [pgs, setPgs] = useState<ExtendedPg[]>([]);
+
   const [city, setCity] = useState<string>(searchParams.get("city") || "");
   const [gender, setGender] = useState<string | undefined>("");
   const [bhk, setBhk] = useState<string | undefined>("");

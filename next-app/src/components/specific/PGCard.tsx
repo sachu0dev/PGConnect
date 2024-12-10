@@ -6,18 +6,23 @@ import Link from "next/link";
 import React from "react";
 import { FaGenderless } from "react-icons/fa6";
 import { IoMdFemale, IoMdMale } from "react-icons/io";
-import { PG } from "../../helpers/TypeHelper";
 import CustumToolTip from "../shared/CustumToolTip";
 import { Button } from "../ui/button";
 import PhoneNumberInput from "./PhoneNumberInput";
+import { Pg } from "@prisma/client";
 
 interface PGCardProps {
-  pg: PG;
+  pg: Pg;
 }
 
 const PGCard: React.FC<PGCardProps> = ({ pg }) => {
   return (
-    <div className="shadow-lg w-full flex justify-between min-h-[280px] max-w-[828px] rounded-xl overflow-hidden cursor-pointer">
+    <div className="relative shadow-lg w-full flex justify-between min-h-[280px] max-w-[828px] rounded-xl overflow-hidden cursor-pointer">
+      {pg.isDummy && (
+        <div className="absolute z-50 top-2 left-2 bg-primary1 text-white text-xs px-2 py-1  rounded-full">
+          Dummy PG
+        </div>
+      )}
       <div className="w-1/3 overflow-hidden relative">
         <motion.div
           whileHover={{ scale: 1.2 }}

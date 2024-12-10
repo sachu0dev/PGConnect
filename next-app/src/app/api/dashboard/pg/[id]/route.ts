@@ -1,6 +1,7 @@
 import { authenticateRequest } from "@/helpers/AuthenticateUser";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -11,10 +12,8 @@ export async function GET(
   if (authResult instanceof NextResponse) {
     return authResult;
   }
-  const userId = authResult;
 
-  console.log("PG ID:", id);
-  console.log("User ID:", userId);
+  const userId = authResult;
 
   try {
     const pg = await prisma.pg.findUnique({
@@ -49,11 +48,35 @@ export async function GET(
       },
     });
 
-    const chatRooms = await prisma.chatRoom.findMany({
+    const rawChatRooms = await prisma.chatRoom.findMany({
       where: {
         pgId: id,
       },
+      select: {
+        id: true,
+        pgId: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
     });
+
+    const chatRooms = await Promise.all(
+      rawChatRooms.map(async (room) => ({
+        ...room,
+        messageCount: await prisma.message.count({
+          where: {
+            senderId: { not: userId },
+            chatRoomId: room.id,
+            status: "SENT",
+          },
+        }),
+      }))
+    );
+
     return NextResponse.json({
       success: true,
       data: {
@@ -62,7 +85,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.log("PG Search Error:", error);
+    console.error("PG Search Error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

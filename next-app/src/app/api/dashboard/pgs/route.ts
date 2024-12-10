@@ -4,12 +4,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
+    // Authenticate the incoming request
     const authResult = await authenticateRequest(request);
     if (authResult instanceof NextResponse) {
-      return authResult;
+      return authResult; // Return early if authentication fails
     }
     const userId = authResult;
 
+    // Fetch the PG data for the authenticated user
     const userPgs = await prisma.pg.findMany({
       where: {
         owner: {
@@ -38,15 +40,40 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
+        ChatRoom: {
+          select: {
+            id: true,
+            messages: {
+              where: {
+                senderId: { not: userId },
+                status: "SENT",
+              },
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
       },
     });
 
+    const userPgsWithActivity = userPgs.map((pg) => {
+      const newActivity = pg.ChatRoom.some(
+        (chatRoom) => chatRoom.messages.length > 0
+      );
+      return {
+        ...pg,
+        newActivity,
+      };
+    });
+
+    // Return the fetched data with the new field
     return NextResponse.json({
       success: true,
-      data: userPgs,
+      data: userPgsWithActivity,
     });
   } catch (error) {
-    console.log("PG Search Error:", error);
+    console.error("PG Search Error:", error); // Log the error for debugging
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
         data: {
           id: chatId,
           pgId: pgId,
+          userId: userId,
         },
       });
     }

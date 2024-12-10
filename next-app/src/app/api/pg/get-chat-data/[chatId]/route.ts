@@ -18,12 +18,25 @@ export async function GET(
       return authResult;
     }
 
+    const userId = authResult;
+
     if (!chatId) {
       return NextResponse.json(
         { error: "ChatId is required", success: false },
         { status: 400 }
       );
     }
+
+    await prisma.message.updateMany({
+      where: {
+        chatRoomId: chatId,
+        senderId: { not: userId },
+        status: "SENT",
+      },
+      data: {
+        status: "READ",
+      },
+    });
 
     const totalMessageCount = await prisma.message.count({
       where: { chatRoomId: chatId },
@@ -33,6 +46,12 @@ export async function GET(
       where: { id: chatId },
       select: {
         id: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
         messages: {
           take: limit,
           skip: (page - 1) * limit,

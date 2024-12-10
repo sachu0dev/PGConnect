@@ -1,3 +1,4 @@
+import { Pg } from "@prisma/client";
 import axios from "axios";
 
 export interface Pagination {
@@ -29,10 +30,16 @@ export interface PG {
     phoneNumber: number;
   };
 }
-
+interface ExtendedPg extends Pg {
+  contact: string;
+  isDummy: boolean;
+  isAcceptingGuest: boolean;
+  updatedAt: Date;
+  ownerId: string;
+}
 export interface FetchPGsResponse {
   success: boolean;
-  data: PG[];
+  data: ExtendedPg[];
   pagination: Pagination;
   error?: string;
 }

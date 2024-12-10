@@ -23,6 +23,7 @@ model User {
   Pg              Pg[]
   Message         Message[]
   callbackRequest callbackRequest[]
+  ChatRoom        ChatRoom[]
 }
 
 model Pg {
@@ -67,9 +68,16 @@ model callbackRequest {
 
 model ChatRoom {
   id       String    @id
+  userId   String
   pgId     String
   pg       Pg        @relation(fields: [pgId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
   messages Message[]
+}
+
+enum Status {
+  SENT
+  READ
 }
 
 model Message {
@@ -80,6 +88,7 @@ model Message {
   sender     User     @relation(fields: [senderId], references: [id])
   text       String
   createdAt  DateTime @default(now())
+  status     Status   @default(SENT)
 }
 
 enum Gender {

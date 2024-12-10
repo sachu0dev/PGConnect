@@ -3,7 +3,7 @@
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Building, LogOut, MessageSquare, User } from "lucide-react";
+import { Building, LogOut, MonitorUp, User } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
 
@@ -27,11 +27,12 @@ export default function DashboardLayout({
         <User className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
+
     {
-      label: "Chats",
-      href: "/dashboard/chat",
+      label: "Post",
+      href: "/dashboard/post-pg",
       icon: (
-        <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+        <MonitorUp className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {

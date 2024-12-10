@@ -9,17 +9,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+interface EntendedPg extends Pg {
+  newActivity: boolean;
+}
+
 const truncate = (text: string, maxLength: number = 80) => {
   return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
 };
 const Page = () => {
-  const [pgsData, setPgsData] = useState<Pg[]>([]);
+  const [pgsData, setPgsData] = useState<EntendedPg[]>([]);
 
   const fetchOwnersPgs = async () => {
     try {
       const response = await api.get<ApiResponse<Pg[]>>("/api/dashboard/pgs");
       if (response.data.success) {
-        setPgsData(response.data.data);
+        setPgsData(response.data.data as EntendedPg[]);
       }
     } catch (error) {
       console.log(error);
@@ -32,7 +36,7 @@ const Page = () => {
 
   return (
     <div className="flex flex-1">
-      <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-2 flex-1 w-full h-full text-gray-700 overflow-y-auto">
+      <div className="p-2 md:p-10  border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-2 flex-1 w-full h-full text-gray-700 overflow-y-auto">
         <div className=" flex justify-between items-center">
           <h2 className="text-2xl font-semibold">Your PGs</h2>
           <div className="text-sm text-slate-500">PGs: {pgsData.length}</div>
@@ -71,8 +75,14 @@ const Page = () => {
                   <Link
                     key={index}
                     href={`/dashboard/pgs/${pg.id}`}
-                    className="bg-white dark:bg-neutral-900 border dark:border-neutral-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col"
+                    className="relative bg-white dark:bg-neutral-900 border dark:border-neutral-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col"
                   >
+                    {pg.newActivity && (
+                      <div className="absolute top-2 right-2 bg-primary1 text-white text-xs px-2 py-1  rounded-full">
+                        New Messages Available
+                      </div>
+                    )}
+
                     <div className="w-full h-40 overflow-hidden rounded-xl mb-3">
                       {pg.images && pg.images.length > 0 ? (
                         <Image
@@ -94,11 +104,8 @@ const Page = () => {
                       <h3 className="font-semibold text-lg truncate mb-1">
                         {truncate(pg.name, 30)}
                       </h3>
-                      <p className="text-neutral-600 text-sm">
-                        {truncate(
-                          pg.description || "No description available",
-                          100
-                        )}
+                      <p className="text-neutral-600 text-sm line-clamp-3 text-ellipsis ">
+                        {pg.description || "No description available"}
                       </p>
                     </div>
 
