@@ -22,7 +22,7 @@ const Page = () => {
         setPgsData(response.data.data);
       }
     } catch (error) {
-      console.error(error);
+      console.log(error);
     }
   };
 

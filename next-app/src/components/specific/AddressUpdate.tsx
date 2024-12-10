@@ -79,7 +79,7 @@ const AddressUpdate: React.FC<AddressUpdateProps> = ({
         toast.error("Could not fetch address. Try again.");
       }
     } catch (error) {
-      console.error("Error fetching address:", error);
+      console.log("Error fetching address:", error);
       toast.error("Error fetching address.");
     }
   }, [center]);

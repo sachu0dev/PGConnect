@@ -322,7 +322,7 @@ const AddressForm: React.FC = () => {
   if (!isLoaded) return <p>Loading Map...</p>;
 
   return (
-    <div className="p-4 max-w-[800px] mx-auto bg-white shadow rounded">
+    <div className="m-4 p-4 border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 ">
       <h1 className="text-2xl font-bold mb-6 text-slate-700">
         Create a New PG
       </h1>

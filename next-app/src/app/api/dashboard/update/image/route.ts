@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest) {
       data: updatedPg,
     });
   } catch (error) {
-    console.error("PG Update Error:", error);
+    console.log("PG Update Error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       data: updatedPg,
     });
   } catch (error) {
-    console.error("PG Image Upload Error:", error);
+    console.log("PG Image Upload Error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

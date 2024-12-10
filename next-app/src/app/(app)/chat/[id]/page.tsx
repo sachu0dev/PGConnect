@@ -92,7 +92,7 @@ const Page = ({ params }: { params: Promise<{ id: string }> }) => {
       setPagination(newPagination);
       setPage(newPagination.currentPage - 1);
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      console.log("Error fetching messages:", error);
       toast.error("Failed to fetch messages");
     } finally {
       setIsLoading(false);
@@ -157,7 +157,7 @@ const Page = ({ params }: { params: Promise<{ id: string }> }) => {
     };
 
     const handleConnectError = (err: Error) => {
-      console.error("Connection error:", err.message);
+      console.log("Connection error:", err.message);
       toast.error(`Connection error: ${err.message}`);
     };
 

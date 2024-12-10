@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       );
     } catch (axiosError) {
       if (axiosError instanceof AxiosError) {
-        console.error("PhonePe API Error:", {
+        console.log("PhonePe API Error:", {
           status: axiosError.response?.status,
           data: axiosError.response?.data,
           message: axiosError.message,
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
           { status: axiosError.response?.status || 500 }
         );
       }
-      console.error("Unexpected error in PhonePe API call:", axiosError);
+      console.log("Unexpected error in PhonePe API call:", axiosError);
       return NextResponse.json(
         {
           success: false,
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("Pre-API Call Error:", error);
+    console.log("Pre-API Call Error:", error);
     return NextResponse.json(
       {
         success: false,

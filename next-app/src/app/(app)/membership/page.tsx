@@ -50,12 +50,12 @@ const Page = () => {
     e.preventDefault();
 
     if (!userData?.username) {
-      console.error("User data is missing.");
+      console.log("User data is missing.");
       return;
     }
 
     if (!amount || amount <= 0) {
-      console.error("Invalid amount entered.");
+      console.log("Invalid amount entered.");
       return;
     }
 
@@ -78,10 +78,10 @@ const Page = () => {
       if (response.data.success && redirectUrl) {
         window.location.href = redirectUrl;
       } else {
-        console.error("Payment response error:", response.data);
+        console.log("Payment response error:", response.data);
       }
     } catch (error) {
-      console.error("Payment request failed:", error);
+      console.log("Payment request failed:", error);
     }
   };
   return (
