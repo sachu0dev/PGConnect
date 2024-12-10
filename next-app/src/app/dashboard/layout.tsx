@@ -64,7 +64,9 @@ export default function DashboardLayout({
           </div>
         </SidebarBody>
       </Sidebar>
-      <div className="flex flex-1">{children}</div>
+      <div className="flex flex-1 overflow-y-scroll border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 ">
+        {children}
+      </div>
     </div>
   );
 }

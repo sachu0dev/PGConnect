@@ -7,6 +7,7 @@ import ClientProvider from "./providers/ClientProvider";
 import StoreProvider from "./providers/StoreProvider";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { Toaster } from "sonner";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -158,6 +159,8 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <Toaster />
+
             <ClientProvider>
               <GoogleOAuthProvider
                 clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
