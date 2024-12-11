@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       data: userPgsWithActivity,
     });
   } catch (error) {
-    console.error("PG Search Error:", error); // Log the error for debugging
+    console.log("PG Search Error:", error); // Log the error for debugging
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

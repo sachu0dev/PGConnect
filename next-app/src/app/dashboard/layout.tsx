@@ -1,17 +1,29 @@
 "use client";
 
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
+import { useAppSelector } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Building, LogOut, MonitorUp, User } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { userData } = useAppSelector((state) => state.user);
+  useEffect(() => {
+    if (userData?.isOwner === undefined) return;
+
+    if (userData?.isOwner) {
+      window.location.href = "/dashboard/pgs";
+    } else {
+      window.location.href = "/dashboard/verify-owner";
+    }
+  }, [userData]);
+
   const links = [
     {
       label: "Pgs",

@@ -1,18 +1,17 @@
 "use client";
-import React from "react";
-import { useAppSelector } from "../../lib/hooks";
-import { RootState } from "../../lib/store";
-import Link from "next/link";
+import useAuth from "@/hooks/userAuth";
 import { motion } from "framer-motion";
 import {
   BadgeDollarSign,
   Bed,
-  Building,
   GitCommitHorizontal,
+  LayoutDashboard,
   LogOut,
   User,
 } from "lucide-react";
-import useAuth from "@/hooks/userAuth";
+import Link from "next/link";
+import { useAppSelector } from "../../lib/hooks";
+import { RootState } from "../../lib/store";
 // import { ThemeToggler } from "../specific/ThemeToggler";
 
 const MobileNav = () => {
@@ -39,32 +38,30 @@ const MobileNav = () => {
               href="/pgs"
               className="p-4 w-full flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-secondary1-dark/90 transition-colors"
             >
-              <Bed size={24} />
+              <Bed size={24} color={"#60C3AD"} />
               <div className="flex flex-col">
                 <span className="font-semibold text-sm">Find a Pg</span>
                 <span className="text-xs text-gray-500">Get your pg now</span>
               </div>
             </Link>
             <Link
-              href="/membership"
+              href="/dashboard/pgs"
               className="p-4 w-full flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-secondary1-dark/90 transition-colors"
             >
-              <BadgeDollarSign size={24} />
+              <LayoutDashboard size={24} color={"#60C3AD"} />
               <div className="flex flex-col">
-                <span className="font-semibold text-sm">Become a Member</span>
-                <span className="text-xs text-gray-500">More Benefits</span>
+                <span className="font-semibold text-sm">For Pg Owners</span>
+                <span className="text-xs text-gray-500">Mannage your Pgs</span>
               </div>
             </Link>
             <Link
-              href="/post"
+              href="/membership"
               className="p-4 w-full flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-secondary1-dark/90 transition-colors"
             >
-              <Building size={24} />
+              <BadgeDollarSign size={24} color={"#60C3AD"} />
               <div className="flex flex-col">
-                <span className="font-semibold text-sm">
-                  List your Property
-                </span>
-                <span className="text-xs text-gray-500">For free</span>
+                <span className="font-semibold text-sm">Become a Member</span>
+                <span className="text-xs text-gray-500">More Benefits</span>
               </div>
             </Link>
           </nav>
@@ -73,7 +70,7 @@ const MobileNav = () => {
           <div className="flex justify-evenly p-4">
             {userData ? (
               <div className="flex space-x-2 font-semibold items-center">
-                <User size={24} aria-label="User Icon" />
+                <User size={24} aria-label="User Icon" color={"#60C3AD"} />
                 <Link href="/profile" className="hover:underline">
                   {userData.username}
                 </Link>

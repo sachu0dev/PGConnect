@@ -5,7 +5,6 @@ import { setUser } from "@/lib/features/user/userSlice";
 import {
   BadgeDollarSign,
   Bed,
-  Building,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -115,23 +114,12 @@ const Header = () => {
             <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-400">
               Become a Member
             </h3>
-            <span className="text-xs text-slate-500">More Benefits</span>
+            <span className="text-xs text-slate-500">
+              More Benefits for Pg owners
+            </span>
           </div>
         </Link>
-        <Link
-          href="/post-pg"
-          className="h-full flex justify-center space-x-2 border-r border-slate-200 dark:border-slate-800 p-4 "
-        >
-          <div className="flex items-center">
-            <Building size={24} color={"#60C3AD"} />
-          </div>
-          <div className="flex flex-col items-center">
-            <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-400">
-              List your property
-            </h3>
-            <span className="text-xs text-slate-500">For free</span>
-          </div>
-        </Link>
+
         <div className="h-full flex justify-center space-x-2 p-4">
           <div className="flex items-center justify-center">
             <User size={24} color={"#60C3AD"} />

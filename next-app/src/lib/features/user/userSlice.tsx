@@ -5,6 +5,7 @@ interface User {
   email: string;
   phoneNumber: string;
   id: string;
+  isOwner: boolean;
 }
 interface UserState {
   isUser: boolean;

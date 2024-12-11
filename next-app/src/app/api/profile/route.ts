@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
         email: true,
         phoneNumber: true,
         id: true,
+        isOwner: true,
       },
     });
 

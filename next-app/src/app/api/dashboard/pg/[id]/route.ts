@@ -85,7 +85,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("PG Search Error:", error);
+    console.log("PG Search Error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

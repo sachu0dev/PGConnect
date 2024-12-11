@@ -13,6 +13,7 @@ const LocationInput = () => {
     cityCount: 0,
     bedCount: 0,
     isLoading: true,
+    isLoaded: false,
     error: null as string | null,
   });
 
@@ -45,6 +46,7 @@ const LocationInput = () => {
           bedCount: data.totalBeds,
           isLoading: false,
           error: null,
+          isLoaded: true,
         });
       }
     } catch {
@@ -104,8 +106,10 @@ const LocationInput = () => {
   };
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (!stats.isLoaded) {
+      fetchStats();
+    }
+  }, [stats.isLoaded]);
 
   if (loadError) {
     return <div className="text-red-500">Error loading Google Maps</div>;
