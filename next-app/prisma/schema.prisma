@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Membership {
+  FREE
+  BASIC
+  PREMIUM
+}
+
 model User {
   id                 String    @id @default(uuid())
   username           String    @unique
@@ -23,10 +29,36 @@ model User {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
+  membership Membership @default(FREE)
+
   Pg              Pg[]
   Message         Message[]
   callbackRequest callbackRequest[]
   ChatRoom        ChatRoom[]
+  Subscription    Subscription?
+}
+
+model Subscription {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  merchantSubscriptionId String?
+  phonePaySubscriptionId String?
+  planType               Membership
+  startDate              DateTime           @default(now())
+  nextBillingDate        DateTime?
+  status                 SubscriptionStatus @default(ACTIVE)
+
+  maxCharges  Int @default(1)
+  chargesMade Int @default(0)
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PENDING
 }
 
 model Pg {

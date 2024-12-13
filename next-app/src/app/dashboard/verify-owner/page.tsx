@@ -127,7 +127,10 @@ export default function AadhaarVerificationForm() {
         <Card>
           <CardHeader>
             <CardTitle>Aadhaar Verification</CardTitle>
-            <CardDescription>Verify your Aadhaar card details</CardDescription>
+            <CardDescription>
+              Verify your Aadhaar card details. Providing wrong details may lead
+              to account suspension.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>

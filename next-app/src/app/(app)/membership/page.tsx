@@ -1,13 +1,26 @@
 "use client";
 import MembershipCard from "@/components/specific/Membership";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import api from "@/lib/axios";
 import { useAppSelector } from "@/lib/hooks";
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "sonner";
 
+type Membership = "FREE" | "BASIC" | "PREMIUM";
+type SubscriptionStatus = "ACTIVE" | "CANCELLED" | "EXPIRED";
+
+interface SubscriptionDetails {
+  id: string;
+  userId: string;
+  planType: Membership;
+  startDate: Date;
+  nextBillingDate?: Date;
+  status: SubscriptionStatus;
+  merchantSubscriptionId?: string;
+}
 const demoPlanes = [
   {
+    tag: "FREE",
     title: "Free",
     price: 0,
     features: [
@@ -16,9 +29,9 @@ const demoPlanes = [
       "Basic ability to edit PG details",
       "No additional features",
     ],
-    link: "/login",
   },
   {
+    tag: "BASIC",
     title: "Basic",
     price: 500,
     features: [
@@ -28,11 +41,11 @@ const demoPlanes = [
       "Callback request feature with email notification",
       "No advertising capabilities",
     ],
-    link: "/login",
   },
   {
+    tag: "PREMIUM",
     title: "Premium",
-    price: 2000,
+    price: 5000,
     features: [
       "Maximum of 20 PG listings",
       "Full management access",
@@ -40,72 +53,95 @@ const demoPlanes = [
       "Callback request feature with email notification",
       "Advertising feature",
     ],
-    link: "/login",
   },
 ];
-const Page = () => {
-  const [amount, setAmount] = useState<number | "">("");
+
+const MembershipPage = () => {
   const { userData } = useAppSelector((state) => state.user);
-  const handlePayment = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const [currentSubscription, setCurrentSubscription] =
+    useState<SubscriptionDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    if (!userData?.username) {
-      console.log("User data is missing.");
-      return;
-    }
+  useEffect(() => {
+    const fetchCurrentSubscription = async () => {
+      if (!userData) {
+        setIsLoading(false);
+        return;
+      }
 
-    if (!amount || amount <= 0) {
-      console.log("Invalid amount entered.");
-      return;
-    }
+      try {
+        const response = await axios.get(
+          `/api/payment/subscription/${userData.id}`
+        );
 
-    const data = {
-      name: userData.username,
-      amount,
-      mobile: "6283816638",
-      MUID: `MUID${Date.now()}`,
-      transactionId: `TID${Date.now()}`,
+        if (response.data.success) {
+          setCurrentSubscription(response.data.subscription);
+        }
+      } catch (error) {
+        console.log("Error fetching subscription:", error);
+        toast.error("Failed to fetch current subscription");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    console.log("Submitting payment form:", data);
+    fetchCurrentSubscription();
+  }, [userData]);
+
+  const handleCancelSubscription = async () => {
+    if (!currentSubscription) return;
 
     try {
-      const response = await api.post("/api/payment/order", data);
+      const response = await axios.post("/api/payment/cancel-subscription", {
+        subscriptionId: currentSubscription.id,
+      });
 
-      const redirectUrl =
-        response.data?.data?.data?.instrumentResponse?.redirectInfo?.url;
-
-      if (response.data.success && redirectUrl) {
-        window.location.href = redirectUrl;
+      if (response.data.success) {
+        toast.success("Subscription cancelled successfully");
+        setCurrentSubscription(null);
       } else {
-        console.log("Payment response error:", response.data);
+        toast.error("Failed to cancel subscription");
       }
     } catch (error) {
-      console.log("Payment request failed:", error);
+      console.log("Subscription cancellation error:", error);
+      toast.error("An error occurred while cancelling the subscription");
     }
   };
+
   return (
     <div className="min-h-[calc(100vh-69px)] w-full flex flex-col py-8 items-center bg-primary1/10">
       <h1 className="text-2xl font-medium mb-8 text-primary1">Membership</h1>
+
+      {isLoading ? (
+        <p>Loading...</p>
+      ) : (
+        currentSubscription && (
+          <div className="mb-8 p-4 bg-yellow-100 rounded-lg text-center">
+            <p className="text-lg font-medium">
+              Current Subscription: {currentSubscription.planType}
+            </p>
+            <p className="text-sm text-gray-600 mt-2">
+              Active since{" "}
+              {new Date(currentSubscription.startDate).toLocaleDateString()}
+            </p>
+            <Button
+              variant="destructive"
+              className="mt-4"
+              onClick={handleCancelSubscription}
+            >
+              Cancel Subscription
+            </Button>
+          </div>
+        )
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {demoPlanes.map((plane, index) => (
           <MembershipCard key={index} plane={plane} />
         ))}
-
-        <form className="flex flex-col gap-4" onSubmit={handlePayment}>
-          <Input
-            placeholder="Enter amount"
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(Number(e.target.value) || "")}
-            required
-          />
-
-          <Button type="submit">Pay Now</Button>
-        </form>
       </div>
     </div>
   );
 };
 
-export default Page;
+export default MembershipPage;
