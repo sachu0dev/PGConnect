@@ -8,6 +8,7 @@ import StoreProvider from "./providers/StoreProvider";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Toaster } from "sonner";
+import Script from "next/script";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -147,6 +148,11 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(structuredData),
           }}
+        />
+        {/* Add Razorpay script */}
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="beforeInteractive"
         />
       </head>
       <body

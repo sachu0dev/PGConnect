@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgres://postgres:mysecretpassword@localhost:5432"
 }
 
 enum Membership {
@@ -35,30 +35,22 @@ model User {
   Message         Message[]
   callbackRequest callbackRequest[]
   ChatRoom        ChatRoom[]
-  Subscription    Subscription?
+  Subscription    Subscription[]
 }
 
 model Subscription {
-  id     String @id @default(uuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
-
-  merchantSubscriptionId String?
-  phonePaySubscriptionId String?
-  planType               Membership
-  startDate              DateTime           @default(now())
-  nextBillingDate        DateTime?
-  status                 SubscriptionStatus @default(ACTIVE)
-
-  maxCharges  Int @default(1)
-  chargesMade Int @default(0)
-}
-
-enum SubscriptionStatus {
-  ACTIVE
-  CANCELLED
-  EXPIRED
-  PENDING
+  id                     String    @id @default(uuid())
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id])
+  razorpaySubscriptionId String    @unique
+  status                 String    @default("PENDING")
+  plan                   String
+  startDate              DateTime?
+  endDate                DateTime?
+  lastPaymentDate        DateTime?
+  cancellationDate       DateTime?
+  amount                 Float
+  lastPaymentId          String?
 }
 
 model Pg {

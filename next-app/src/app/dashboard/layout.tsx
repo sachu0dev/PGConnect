@@ -14,6 +14,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { userData } = useAppSelector((state) => state.user);
+
   useEffect(() => {
     if (userData?.isOwner === undefined) return;
 
@@ -39,7 +40,6 @@ export default function DashboardLayout({
         <User className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
-
     {
       label: "Post",
       href: "/dashboard/post-pg",
@@ -61,14 +61,14 @@ export default function DashboardLayout({
   return (
     <div
       className={cn(
-        "rounded-md flex flex-col md:flex-row bg-primary1/10  w-full flex-1  mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
+        "rounded-md flex flex-col md:flex-row bg-primary1/10 w-full flex-1 mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
         "h-screen"
       )}
     >
       <Sidebar open={open} setOpen={setOpen}>
         <SidebarBody className="justify-between gap-10 ">
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-            {open ? <Logo /> : <LogoIcon />}
+            {open ? <DashboardLogo /> : <DashboardLogoIcon />}
             <div className="mt-8 flex flex-col gap-2">
               {links.map((link, idx) => (
                 <SidebarLink key={idx} link={link} />
@@ -84,7 +84,8 @@ export default function DashboardLayout({
   );
 }
 
-export const Logo = () => {
+// Separate components outside the main layout component
+const DashboardLogo = () => {
   return (
     <Link
       href="/"
@@ -98,7 +99,7 @@ export const Logo = () => {
         <div className="flex">
           <h1 className="text-xl font-extrabold text-primary1">PG</h1>
           <span className="text-primary1 text-xl">.</span>
-          <h1 className="  transform text-sm -translate-x-1 text-slate-700 dark:text-slate-400">
+          <h1 className="transform text-sm -translate-x-1 text-slate-700 dark:text-slate-400">
             CONNECT
           </h1>
         </div>
@@ -107,7 +108,7 @@ export const Logo = () => {
   );
 };
 
-export const LogoIcon = () => {
+const DashboardLogoIcon = () => {
   return (
     <Link
       href="/"
@@ -116,7 +117,7 @@ export const LogoIcon = () => {
       <div className="flex">
         <h1 className="text-xl font-extrabold text-primary1">PG</h1>
         <span className="text-primary1 text-xl">.</span>
-        <h1 className="  transform text-sm -translate-x-1 text-slate-700 dark:text-slate-400">
+        <h1 className="transform text-sm -translate-x-1 text-slate-700 dark:text-slate-400">
           CONNECT
         </h1>
       </div>

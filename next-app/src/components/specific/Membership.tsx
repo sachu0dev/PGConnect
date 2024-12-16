@@ -1,11 +1,37 @@
 "use client";
-
+import { useState } from "react";
 import { Check, IndianRupee } from "lucide-react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import axios from "axios";
-import { useState } from "react";
 import { useAppSelector } from "@/lib/hooks";
+import api from "@/lib/axios";
+
+// Define a more specific type for Razorpay instead of using 'any'
+interface RazorpayCheckoutOptions {
+  key: string | undefined;
+  subscription_id: string;
+  name: string;
+  description: string;
+  handler: (response: {
+    razorpay_payment_id: string;
+    razorpay_subscription_id: string;
+    razorpay_signature: string;
+  }) => void;
+  modal: {
+    ondismiss: () => void;
+  };
+}
+
+// Extend the global Window interface with a more typed Razorpay definition
+declare global {
+  interface Window {
+    Razorpay: {
+      new (options: RazorpayCheckoutOptions): {
+        open: () => void;
+      };
+    };
+  }
+}
 
 interface MembershipCardProps {
   tag: string;
@@ -25,28 +51,53 @@ const MembershipCard = ({ plane }: { plane: MembershipCardProps }) => {
       return;
     }
 
-    const recurringDetailsMap = {
-      FREE: { frequency: "MONTHLY", maxCharges: 1 },
-      BASIC: { frequency: "MONTHLY", maxCharges: 12 },
-      PREMIUM: { frequency: "YEARLY", maxCharges: 1 },
-    };
-
     try {
       setIsProcessing(true);
-      const response = await axios.post("/api/payment/subscribe", {
-        planId: plane.tag,
-        amount: plane.price,
-        userId: userData.id,
-        ...recurringDetailsMap[plane.tag as keyof typeof recurringDetailsMap],
+
+      const response = await api.post("/api/subscriptions/create", {
+        planTag: plane.tag,
       });
 
-      if (response.data.success) {
-        window.location.href = response.data.paymentUrl;
-      } else {
-        toast.error("Failed to initiate subscription: " + response.data.error);
+      if (!response.data.success) {
+        toast.error(`Failed to initiate subscription: ${response.data.error}`);
+        return;
       }
+
+      const options: RazorpayCheckoutOptions = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        subscription_id: response.data.subscriptionId,
+        name: "PGCONNECT",
+        description: `${plane.title} Subscription`,
+        handler: async function (response) {
+          try {
+            const verifyResponse = await api.post("/api/subscriptions/verify", {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_subscription_id: response.razorpay_subscription_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            if (verifyResponse.data.message) {
+              toast.success("Subscription activated successfully!");
+            } else {
+              toast.error("Subscription verification failed");
+            }
+          } catch (verifyError) {
+            toast.error("Error verifying subscription");
+            console.error(verifyError);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            toast.error("Payment cancelled");
+          },
+        },
+      };
+
+      // Create Razorpay instance and open checkout
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.open();
     } catch (error) {
-      console.log("Subscription error:", error);
+      console.error("Subscription error:", error);
       toast.error("An error occurred while processing your subscription");
     } finally {
       setIsProcessing(false);
@@ -91,7 +142,6 @@ const MembershipCard = ({ plane }: { plane: MembershipCardProps }) => {
         >
           {isProcessing ? "Processing..." : "Subscribe"}
         </Button>
-        <div className="w-full text-xs text-center"></div>
       </div>
     </div>
   );
