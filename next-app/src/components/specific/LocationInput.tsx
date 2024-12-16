@@ -30,8 +30,8 @@ const LocationInput = () => {
 
   const handleSearch = () => {
     router.push(
-      `/pgs?city=${selectedCity ?? "inputRef.current?.value"}&payload=${
-        inputRef.current?.value
+      `/pgs?city=${selectedCity || inputRef.current?.value || ""}&payload=${
+        inputRef.current?.value || ""
       }`
     );
   };
@@ -65,10 +65,8 @@ const LocationInput = () => {
 
     if (places?.length) {
       const place = places[0];
-      const cityComponent = place.address_components?.find(
-        (component) =>
-          component.types.includes("locality") ||
-          component.types.includes("political")
+      const cityComponent = place.address_components?.find((component) =>
+        component.types.includes("locality")
       );
       setSelectedCity(cityComponent?.long_name ?? "");
     }
@@ -99,7 +97,7 @@ const LocationInput = () => {
       );
       setSelectedCity(cityComponent?.long_name ?? "");
     } catch (error) {
-      console.log("Error getting location:", error);
+      console.error("Error getting location:", error);
     } finally {
       setIsLocating(false);
     }
@@ -130,7 +128,7 @@ const LocationInput = () => {
   }) => (
     <div className="flex items-center space-x-2">
       {icon}
-      <div className="whitespace-pre-wrap text-xl font-semibold flex items-center tracking-tighter  text-black">
+      <div className="whitespace-pre-wrap text-xl font-semibold flex items-center tracking-tighter text-black">
         <NumberTicker className="text-black" value={value} />+{" "}
         <span className="text-sm font-thin text-[#4e5253]">{label}</span>
       </div>
@@ -138,7 +136,7 @@ const LocationInput = () => {
   );
 
   return (
-    <div className="w-full max-w-[800px] shadow-md p-4 rounded-md bg-white ">
+    <div className="w-full max-w-[800px] shadow-md p-4 rounded-md bg-white">
       <div className="w-full flex justify-between rounded-lg overflow-hidden border border-slate-300 pl-6 mb-4">
         <StandaloneSearchBox
           onLoad={(ref) => (searchBoxRef.current = ref)}
@@ -147,7 +145,7 @@ const LocationInput = () => {
           <input
             ref={inputRef}
             placeholder="Enter city name, area etc..."
-            className="border-none outline-none text-xl w-full  py-4 text-black bg-white"
+            className="border-none outline-none text-xl w-full py-4 text-black bg-white"
             aria-label="Location search"
           />
         </StandaloneSearchBox>
