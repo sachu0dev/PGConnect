@@ -5,22 +5,13 @@ import { Prisma, Gender } from "@prisma/client";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
-    const city = searchParams.get("city");
+    const find = searchParams.get("find");
     const parsedPage = parseInt(searchParams.get("page") || "1", 10);
     const parsedLimit = parseInt(searchParams.get("limit") || "10", 10);
 
     const filters: Prisma.PgWhereInput = {
       isAcceptingGuest: true,
     };
-
-    if (city) {
-      filters.city = {
-        contains: city.toLowerCase(),
-        mode: "insensitive",
-      };
-    } else {
-      console.log("No city filter applied, fetching all PGs.");
-    }
 
     const minRent = searchParams.get("minRent");
     const maxRent = searchParams.get("maxRent");
@@ -35,7 +26,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (gender && gender !== "null") {
-      // Explicitly convert to Gender type
       filters.gender = gender as Gender;
     }
 
@@ -43,13 +33,41 @@ export async function GET(request: NextRequest) {
       filters.bhk = parseInt(bhk, 10);
     }
 
+    let addressFilter = {};
+    if (find) {
+      const keywords = find
+        .trim()
+        .split(/\s+/)
+        .map((word) => word.toLowerCase())
+        .filter((word) => word !== "india");
+
+      if (keywords.length > 0) {
+        addressFilter = {
+          OR: keywords.map((keyword) => ({
+            address: {
+              contains: keyword,
+              mode: "insensitive",
+            },
+          })),
+        };
+      }
+    }
+
+    const combinedFilters = {
+      ...filters,
+      ...addressFilter,
+    };
+
     const [totalCount, pgs] = await Promise.all([
-      prisma.pg.count({ where: filters }),
+      prisma.pg.count({ where: combinedFilters }),
       prisma.pg.findMany({
-        where: filters,
+        where: combinedFilters,
         take: parsedLimit,
         skip: (parsedPage - 1) * parsedLimit,
-        orderBy: { createdAt: "desc" },
+        orderBy: [
+          { createdAt: "desc" },
+          // Add additional sorting logic based on address match ranking if needed
+        ],
         select: {
           id: true,
           name: true,

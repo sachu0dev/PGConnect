@@ -36,8 +36,7 @@ interface ExtendedPg extends Pg {
 const SearchPage = () => {
   const searchParams = useSearchParams();
   const [pgs, setPgs] = useState<ExtendedPg[]>([]);
-
-  const [city, setCity] = useState<string>(searchParams.get("city") || "");
+  const [find, setFind] = useState<string>(searchParams.get("find") || "");
   const [gender, setGender] = useState<string | undefined>("");
   const [bhk, setBhk] = useState<string | undefined>("");
   const [minRent, setMinRent] = useState<string>("");
@@ -59,12 +58,12 @@ const SearchPage = () => {
     libraries: libraries,
   });
 
+  // Fetch PGs with debounce
   const fetchAndSetPgs = useCallback(async () => {
     setLoading(true);
-
     try {
       const data = await fetchPGs({
-        city,
+        find,
         gender,
         bhk,
         minRent,
@@ -72,11 +71,9 @@ const SearchPage = () => {
         page,
         limit: 10,
       });
-
       if (data.success) {
         setPgs(data.data);
         setPagination(data.pagination);
-
         if (data.data.length > 0 && data.data[0].coordinates) {
           const [lat, lng] = data.data[0].coordinates.split(",").map(Number);
           setCenter({ lat, lng });
@@ -90,7 +87,7 @@ const SearchPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [city, gender, bhk, minRent, maxRent, page]);
+  }, [find, gender, bhk, minRent, maxRent, page]);
 
   useEffect(() => {
     fetchAndSetPgs();
@@ -102,6 +99,7 @@ const SearchPage = () => {
     }
   };
 
+  // Handle card hover
   const handleCardHover = (coordinates: string) => {
     if (coordinates) {
       const [lat, lng] = coordinates.split(",").map(Number);
@@ -109,23 +107,24 @@ const SearchPage = () => {
     }
   };
 
+  // Render map
   const renderMap = () => {
     if (loadError) {
       return (
         <div className="flex justify-center items-center w-full h-full">
-          Error loading maps
+          {" "}
+          Error loading maps{" "}
         </div>
       );
     }
-
     if (!isLoaded) {
       return (
         <div className="flex justify-center items-center w-full h-full">
-          <LoaderCircle className="animate-spin" />
+          {" "}
+          <LoaderCircle className="animate-spin" />{" "}
         </div>
       );
     }
-
     return (
       <GoogleMap
         center={center}
@@ -143,11 +142,10 @@ const SearchPage = () => {
       <div className="grid gap-4 py-4 md:grid-cols-4 sticky top-0 bg-white z-10">
         <Input
           type="text"
-          placeholder="City"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
+          placeholder="Search PG"
+          value={find}
+          onChange={(e) => setFind(e.target.value)}
         />
-
         <Select value={gender} onValueChange={(value) => setGender(value)}>
           <SelectTrigger>
             <SelectValue placeholder="Gender" />
@@ -192,7 +190,7 @@ const SearchPage = () => {
       <div className="h-[28px]">
         {pgs.length > 0 && (
           <h2 className="text-lg font-semibold">
-            {pagination.total} PGs waiting to be yours in {city}
+            {pagination.total} PGs waiting to be yours in {find}
           </h2>
         )}
       </div>

@@ -41,8 +41,12 @@ export async function GET(
           select: {
             id: true,
             username: true,
-            email: true,
-            phoneNumber: true,
+            Subscription: {
+              select: {
+                plan: true,
+                status: true,
+              },
+            },
           },
         },
       },

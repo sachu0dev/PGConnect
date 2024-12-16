@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 import api from "@/lib/axios";
 import { ApiResponse } from "@/types/response";
-import { ChatRoom, Pg } from "@prisma/client";
+import { ChatRoom, Pg, Subscription } from "@prisma/client";
 import {
   CircleX,
   ImagePlus,
@@ -44,9 +44,9 @@ import { toast } from "sonner";
 interface ExtendedPg extends Pg {
   owner: {
     username: string;
+    Subscription: Subscription[];
   };
 }
-
 interface ExtendedChatRoom extends ChatRoom {
   id: string;
   userId: string;
@@ -131,6 +131,8 @@ const Page = () => {
       setIsEditing(null);
     }
   };
+
+  console.log(pgData?.owner);
 
   const handleDescitionUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,9 +283,17 @@ const Page = () => {
                     </Avatar>
                   </div>
                   <div className="flex flex-col gap-2 w-full">
-                    <h1 className="text-3xl font-semibold">
-                      {pgData?.owner.username}
-                    </h1>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-3xl font-semibold">
+                        {pgData?.owner.username}
+                      </h1>
+                      {pgData.owner.Subscription[0].status === "ACTIVE" && (
+                        <span className="bg-gray-200 px-2 py-1 rounded-full text-xs">
+                          {pgData.owner.Subscription[0].plan} PLAN
+                        </span>
+                      )}
+                    </div>
+
                     <div className="flex space-x-6 text-slate-400 w-full justify-between">
                       <p className=" text-2xl">{pgData?.address}</p>
 

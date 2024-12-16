@@ -18,7 +18,6 @@ const LocationInput = () => {
   });
 
   const router = useRouter();
-  const [selectedCity, setSelectedCity] = useState("");
   const [isLocating, setIsLocating] = useState(false);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -29,11 +28,7 @@ const LocationInput = () => {
   });
 
   const handleSearch = () => {
-    router.push(
-      `/pgs?city=${selectedCity || inputRef.current?.value || ""}&payload=${
-        inputRef.current?.value || ""
-      }`
-    );
+    router.push(`/pgs?find=${inputRef.current?.value || ""}`);
   };
 
   const fetchStats = async () => {
@@ -65,10 +60,9 @@ const LocationInput = () => {
 
     if (places?.length) {
       const place = places[0];
-      const cityComponent = place.address_components?.find((component) =>
+      place.address_components?.find((component) =>
         component.types.includes("locality")
       );
-      setSelectedCity(cityComponent?.long_name ?? "");
     }
   };
 
@@ -91,11 +85,10 @@ const LocationInput = () => {
       );
       const data = await response.json();
 
-      const cityComponent = data.results[0]?.address_components?.find(
+      data.results[0]?.address_components?.find(
         (component: google.maps.GeocoderAddressComponent) =>
           component.types.includes("locality")
       );
-      setSelectedCity(cityComponent?.long_name ?? "");
     } catch (error) {
       console.error("Error getting location:", error);
     } finally {

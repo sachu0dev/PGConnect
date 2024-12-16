@@ -45,7 +45,7 @@ export interface FetchPGsResponse {
 }
 
 export const fetchPGs = async (params: {
-  city: string;
+  find: string;
   gender?: string;
   bhk?: string;
   minRent?: string;
