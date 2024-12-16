@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgres://postgres:mysecretpassword@localhost:5432"
+  url      = env("DATABASE_URL")
 }
 
 enum Membership {
@@ -51,6 +51,7 @@ model Subscription {
   cancellationDate       DateTime?
   amount                 Float
   lastPaymentId          String?
+  retryLink              String?
 }
 
 model Pg {

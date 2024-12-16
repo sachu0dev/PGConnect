@@ -24,18 +24,25 @@ export async function POST(req: NextRequest) {
       },
       select: {
         membership: true,
-        Subscription: true,
+        Subscription: {
+          select: {
+            status: true,
+          },
+          take: 1,
+        },
       },
     });
 
-    console.log("user:", user);
-
-    // if (user?.Subscription) {
-    //   return NextResponse.json(
-    //     { error: "You are already subscribed to a membership", success: false },
-    //     { status: 200 }
-    //   );
-    // }
+    if (user?.Subscription?.[0]?.status === "ACTIVE") {
+      return NextResponse.json(
+        {
+          error:
+            "You are already subscribed to a membership. Please cancel your current subscription",
+          success: false,
+        },
+        { status: 200 }
+      );
+    }
 
     const { planTag } = (await req.json()) as { planTag?: VALID_PLANS };
 
@@ -81,6 +88,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log("subscription", subscription);
+
     console.log("Subscription created:", subscription);
 
     console.log("Subscription ID:", {
@@ -96,6 +105,7 @@ export async function POST(req: NextRequest) {
         userId: userId,
         razorpaySubscriptionId: subscription.id,
         status: "PENDING",
+        retryLink: subscription.short_url,
         plan: planTag,
         amount: planTag === "PREMIUM" ? 4999 : 499,
       },

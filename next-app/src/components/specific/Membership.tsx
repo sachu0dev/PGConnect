@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useAppSelector } from "@/lib/hooks";
 import api from "@/lib/axios";
 
-// Define a more specific type for Razorpay instead of using 'any'
 interface RazorpayCheckoutOptions {
   key: string | undefined;
   subscription_id: string;
@@ -22,7 +21,6 @@ interface RazorpayCheckoutOptions {
   };
 }
 
-// Extend the global Window interface with a more typed Razorpay definition
 declare global {
   interface Window {
     Razorpay: {
@@ -137,10 +135,14 @@ const MembershipCard = ({ plane }: { plane: MembershipCardProps }) => {
       <div>
         <Button
           onClick={handleSubscribe}
-          disabled={isProcessing}
+          disabled={isProcessing || plane.tag === "FREE"}
           className="bg-white text-primary1 w-full rounded-full hover:bg-white/90 mb-2"
         >
-          {isProcessing ? "Processing..." : "Subscribe"}
+          {isProcessing
+            ? "Processing..."
+            : plane.tag === "FREE"
+            ? "Always free"
+            : "Subscribe"}
         </Button>
       </div>
     </div>

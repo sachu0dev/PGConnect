@@ -166,8 +166,6 @@ const MembershipPage = () => {
 
       if (response.data.success) {
         toast.success("Subscription cancelled successfully");
-        // Optionally, refresh subscription details
-        // You might want to refetch the subscription or update the local state
       } else {
         toast.error(response.data.error || "Failed to cancel subscription");
       }
