@@ -1,22 +1,58 @@
-import { verifyAccessToken } from "@/lib/auth/jwt";
+import { authenticateRequest } from "@/helpers/AuthenticateUser";
 import prisma from "@/lib/prisma";
-import { pgFormSchema } from "@/schemas/pgFromSchema";
-import { NextRequest, NextResponse } from "next/server";
 import { uploadToS3 } from "@/lib/uploadS3";
+import { pgFormSchema } from "@/schemas/pgFromSchema";
+import { Pg } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
+
+const MEMBERSHIP_LIMITS: Record<string, number> = {
+  FREE: 1,
+  BASIC: 5,
+  PREMIUM: 20,
+};
+
+async function checkMembershipLimit(user: { membership: string; Pg: Pg[] }) {
+  const membershipLimit = MEMBERSHIP_LIMITS[user.membership];
+  const pgsCount = user.Pg.length;
+
+  if (pgsCount >= membershipLimit) {
+    return `Your ${user.membership} membership allows a maximum of ${membershipLimit} PG(s). You have already posted ${pgsCount} PG(s). Upgrade your membership to add more.`;
+  }
+  return null;
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const accessToken = req.headers.get("Authorization");
-    if (!accessToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authResult = await authenticateRequest(req);
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+    const userId = authResult;
+
+    // Fetch user details
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { Pg: true, membership: true },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: "User not found. Please log in and try again.",
+          success: false,
+        },
+        { status: 404 }
+      );
     }
 
-    const token = accessToken.replace("Bearer ", "");
-    const { userId } = verifyAccessToken(token);
-    if (!userId) {
+    console.log(user);
+
+    const membershipError = await checkMembershipLimit(user);
+    if (membershipError) {
       return NextResponse.json(
-        { error: "Unauthorized", success: false },
-        { status: 401 }
+        { error: membershipError, success: false },
+        { status: 403 }
       );
     }
 
@@ -25,15 +61,20 @@ export async function POST(req: NextRequest) {
 
     if (images.length < 3) {
       return NextResponse.json(
-        { error: "Minimum 3 images required", success: false },
+        {
+          error: "At least 3 images are required to create a PG listing.",
+          success: false,
+        },
         { status: 400 }
       );
     }
 
+    // Upload images
     const imageUrls = await Promise.all(
       images.map((image) => uploadToS3(image, userId))
     );
 
+    // Extract and validate form data
     const pgData = Object.fromEntries(formData.entries());
     delete pgData.images;
 
@@ -46,44 +87,64 @@ export async function POST(req: NextRequest) {
       isAcceptingGuest: pgData.isAcceptingGuest === "true",
     });
 
+    // Handle city name
     const parsedCity = parsedData.city.trim().toLowerCase();
 
-    const isValidCity = await prisma.city.findUnique({
+    const city = await prisma.city.upsert({
       where: { name: parsedCity },
+      create: { name: parsedCity },
+      update: {},
     });
 
-    if (!isValidCity) {
-      await prisma.city.create({
-        data: {
-          name: parsedCity,
-        },
-      });
-    }
-
+    // Create new PG entry
     const newPG = await prisma.pg.create({
       data: {
         ...parsedData,
-        city: parsedCity,
+        city: city.name,
         ownerId: userId,
         images: imageUrls,
       },
     });
 
     return NextResponse.json(
-      { message: "PG created successfully", pg: newPG, success: true },
+      { message: "PG listing created successfully!", pg: newPG, success: true },
       { status: 201 }
     );
   } catch (error) {
-    console.log("Error handling POST request:", error);
-    if (error instanceof Error && error.message.includes("Unique constraint")) {
+    console.error("Error handling POST request:", error);
+
+    if (error instanceof Error) {
+      if (error.message.includes("Unique constraint")) {
+        return NextResponse.json(
+          {
+            error:
+              "A PG listing with similar details already exists. Please check your input and try again.",
+            success: false,
+          },
+          { status: 409 }
+        );
+      }
+
+      if (error instanceof ZodError) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid input data. Please ensure all fields are correctly filled.",
+            details: error.errors,
+            success: false,
+          },
+          { status: 400 }
+        );
+      }
+
       return NextResponse.json(
-        { error: "A PG with these details already exists", success: false },
-        { status: 409 }
+        {
+          error:
+            "An unexpected error occurred while creating the PG listing. Please try again later.",
+          success: false,
+        },
+        { status: 500 }
       );
     }
-    return NextResponse.json(
-      { error: "Internal server error", success: false, data: error },
-      { status: 500 }
-    );
   }
 }

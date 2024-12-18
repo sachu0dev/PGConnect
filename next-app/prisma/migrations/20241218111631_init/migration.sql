@@ -24,6 +24,7 @@ CREATE TABLE "User" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "membership" "Membership" NOT NULL DEFAULT 'FREE',
+    "adsCount" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -41,6 +42,7 @@ CREATE TABLE "Subscription" (
     "cancellationDate" TIMESTAMP(3),
     "amount" DOUBLE PRECISION NOT NULL,
     "lastPaymentId" TEXT,
+    "retryLink" TEXT,
 
     CONSTRAINT "Subscription_pkey" PRIMARY KEY ("id")
 );

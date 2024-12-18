@@ -18,8 +18,10 @@ const truncate = (text: string, maxLength: number = 80) => {
 };
 const Page = () => {
   const [pgsData, setPgsData] = useState<EntendedPg[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchOwnersPgs = async () => {
+    setLoading(true);
     try {
       const response = await api.get<ApiResponse<Pg[]>>("/api/dashboard/pgs");
       if (response.data.success) {
@@ -27,6 +29,8 @@ const Page = () => {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -42,8 +46,27 @@ const Page = () => {
           <div className="text-sm text-slate-500">PGs: {pgsData.length}</div>
         </div>
         <div className="w-full h-[500px] ">
+          {!loading && pgsData.length === 0 && (
+            <div className="bg-white dark:bg-neutral-900 rounded-xl p-6  flex flex-col space-y-4">
+              <div className="space-y-4 text-center">
+                <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+                  No PGs Found
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  You have not created any PGs yet.
+                </p>
+                <Link
+                  href="/dashboard/post-pg"
+                  className="inline-block text-sm font-medium text-primary1 border border-primary1 py-2 px-5 rounded-md 
+                          hover:bg-primary1 hover:text-white transition duration-300 ease-in-out"
+                >
+                  Post Your First PG
+                </Link>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {pgsData.length === 0
+            {loading
               ? [...Array(10)].map((_, index) => (
                   <div
                     key={index}

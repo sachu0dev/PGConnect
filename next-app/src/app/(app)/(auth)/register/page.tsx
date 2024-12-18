@@ -21,11 +21,11 @@ const SignupPage = () => {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    username: "sushil",
-    email: "suahilkumar134@gmail.com",
-    phoneNumber: "6283816638",
-    password: "123456",
-    confirmPassword: "123456",
+    username: "",
+    email: "",
+    phoneNumber: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState({

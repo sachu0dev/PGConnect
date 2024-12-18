@@ -96,3 +96,39 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id } = await context.params;
+
+  const authResult = await authenticateRequest(request);
+  if (authResult instanceof NextResponse) {
+    return authResult;
+  }
+
+  const userId = authResult;
+
+  try {
+    await prisma.pg.delete({
+      where: {
+        id: id,
+        ownerId: userId,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        message: "PG deleted successfully",
+      },
+    });
+  } catch (error) {
+    console.log("Pg Delete Error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

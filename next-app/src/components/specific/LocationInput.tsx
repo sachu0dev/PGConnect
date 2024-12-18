@@ -6,6 +6,9 @@ import { LocateFixed, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import NumberTicker from "../ui/number-ticker";
 import { useRouter } from "next/navigation";
+import { Libraries } from "@react-google-maps/api";
+
+const libraries: Libraries = ["places", "geometry"];
 
 const LocationInput = () => {
   const [stats, setStats] = useState({
@@ -24,7 +27,7 @@ const LocationInput = () => {
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
-    libraries: ["places"],
+    libraries,
   });
 
   const handleSearch = () => {
@@ -58,6 +61,8 @@ const LocationInput = () => {
 
     const places = searchBoxRef.current.getPlaces();
 
+    console.log(places);
+
     if (places?.length) {
       const place = places[0];
       place.address_components?.find((component) =>
@@ -85,10 +90,12 @@ const LocationInput = () => {
       );
       const data = await response.json();
 
-      data.results[0]?.address_components?.find(
+      const address = data.results[0]?.address_components?.find(
         (component: google.maps.GeocoderAddressComponent) =>
           component.types.includes("locality")
       );
+
+      inputRef.current?.setAttribute("value", address?.long_name || "");
     } catch (error) {
       console.error("Error getting location:", error);
     } finally {

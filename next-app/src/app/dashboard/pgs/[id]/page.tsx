@@ -1,4 +1,5 @@
 "use client";
+import { DeletePgDialog } from "@/components/shared/DeletePgDialog";
 import ImageUpload from "@/components/shared/ImageUploader";
 import {
   DescriptionSkeleton,
@@ -67,6 +68,7 @@ const Page = () => {
   const [images, setImages] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [showImageUploadDialog, setShowImageUploadDialog] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const [name, setName] = useState<string | null>(null);
 
@@ -244,6 +246,8 @@ const Page = () => {
     fetchPgDetails();
   }, [fetchPgDetails]);
 
+  console.log(pgData?.owner.Subscription);
+
   return (
     <div className="flex flex-1 bg-white relative">
       <div className="p-2 md:p-10  bg-white dark:bg-neutral-900 flex flex-col gap-2 flex-1 w-full h-full font-inter">
@@ -287,11 +291,12 @@ const Page = () => {
                       <h1 className="text-3xl font-semibold">
                         {pgData?.owner.username}
                       </h1>
-                      {pgData.owner.Subscription[0].status === "ACTIVE" && (
-                        <span className="bg-gray-200 px-2 py-1 rounded-full text-xs">
-                          {pgData.owner.Subscription[0].plan} PLAN
-                        </span>
-                      )}
+                      {pgData.owner.Subscription.length > 0 &&
+                        pgData.owner.Subscription[0].status === "ACTIVE" && (
+                          <span className="bg-gray-200 px-2 py-1 rounded-full text-xs">
+                            {pgData.owner.Subscription[0].plan} PLAN
+                          </span>
+                        )}
                     </div>
 
                     <div className="flex space-x-6 text-slate-400 w-full justify-between">
@@ -679,6 +684,22 @@ const Page = () => {
                 </Dialog>
               </div>
             )}
+            <div className="flex gap-2 w-full py-4 text-lg">
+              <Button className="w-full">Stop Acception</Button>
+              <Button
+                variant="destructive"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="w-full"
+              >
+                Delete PG
+              </Button>
+            </div>
+
+            <DeletePgDialog
+              pgId={id as string}
+              isOpen={isDeleteDialogOpen}
+              onOpenChange={setIsDeleteDialogOpen}
+            />
           </div>
         )}
       </div>

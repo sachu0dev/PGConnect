@@ -15,6 +15,7 @@ import api from "@/lib/axios";
 import { AxiosError } from "axios";
 import { ApiResponse } from "@/types/response";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const containerStyle = {
   width: "100%",
@@ -79,6 +80,8 @@ const AddressForm: React.FC = () => {
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+  const router = useRouter();
 
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof FormData, string>>
@@ -275,7 +278,6 @@ const AddressForm: React.FC = () => {
 
       if (response.data.success) {
         toast.success("PG created successfully!");
-        // Reset form
         setFormData({
           name: "",
           contact: "",
@@ -293,6 +295,7 @@ const AddressForm: React.FC = () => {
         setImageFiles([]);
         setImagePreviews([]);
         setFieldErrors({});
+        router.push(`/dashboard/pgs/${response.data.data.id}`);
       } else {
         toast.error(response.data.error || "Failed to create PG");
       }
@@ -309,9 +312,10 @@ const AddressForm: React.FC = () => {
         toast.error("Validation errors occurred. Please check the fields.");
       } else {
         const axiosError = error as AxiosError<ApiResponse>;
+        console.log(axiosError);
 
         toast.error(
-          axiosError.response?.data?.message || "Something went wrong!"
+          axiosError.response?.data?.error || "Something went wrong!"
         );
       }
     } finally {

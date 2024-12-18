@@ -47,7 +47,7 @@ const demoPlanes = [
     features: [
       "Maximum of 5 PG listings",
       "Full management access",
-      "Basic ability to edit PG details",
+      "Ability to edit PG details",
       "Callback request feature with email notification",
       "No advertising capabilities",
     ],

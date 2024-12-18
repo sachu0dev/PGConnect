@@ -230,7 +230,7 @@ const SearchPage = () => {
             </div>
           )}
         </div>
-        <div className="bg-slate-100 h-[90vh] hidden md:w-[200px] md:block xl:w-[420px] sticky top-20 rounded-3xl overflow-hidden">
+        <div className="bg-slate-100 h-[90vh] hidden md:block  w-1/3 sticky top-20 rounded-3xl overflow-hidden">
           {renderMap()}
         </div>
       </div>

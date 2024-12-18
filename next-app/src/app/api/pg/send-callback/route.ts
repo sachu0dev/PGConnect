@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
       return authResult;
     }
     const userId = authResult;
-
     const body = await req.json();
     const { PhoneNumber, pgId } = body;
 
@@ -26,7 +25,7 @@ export async function POST(req: NextRequest) {
       select: {
         name: true,
         owner: {
-          select: { email: true },
+          select: { email: true, membership: true },
         },
       },
     });
@@ -72,27 +71,30 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const emailResponse = await sendCallbackRequest({
-      PhoneNumber,
-      pgName: pgOwnerDetails.name,
-      username: user.username,
-      email: pgOwnerDetails.owner.email,
-    });
+    console.log("Callback:", pgOwnerDetails.owner);
 
-    if (!emailResponse.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: emailResponse.message,
-        },
-        { status: 500 }
-      );
+    if (pgOwnerDetails.owner.membership !== "FREE") {
+      const emailResponse = await sendCallbackRequest({
+        PhoneNumber,
+        pgName: pgOwnerDetails.name,
+        username: user.username,
+        email: pgOwnerDetails.owner.email,
+      });
+
+      if (!emailResponse.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: emailResponse.message,
+          },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json(
       {
         message: "Callback request sent successfully, cannot be sent again",
-        emailResponse,
         success: true,
       },
       { status: 200 }
