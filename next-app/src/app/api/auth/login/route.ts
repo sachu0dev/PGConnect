@@ -1,53 +1,43 @@
-import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import { generateAccessToken, generateRefreshToken } from "@/lib/auth/jwt";
-import { cookies } from "next/headers";
+import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { loginSchema } from "@/lib/validation";
+import { ApiError, forbidden, getClientIp, ok, readJson, route, unauthorized } from "@/server/http";
+import { checkRateLimit, enforceRateLimit } from "@/server/rate-limit";
+import { MINUTE, checkPassword, issueCode, signIn } from "../_lib/helpers";
 
-const getUserByEmail = async (email: string) => {
-  const user = await prisma.user.findUnique({ where: { email } });
-  return user;
-};
+const INVALID = "Invalid email or password";
 
-export async function POST(req: NextRequest) {
-  try {
-    const { email, password } = await req.json();
-    const user = await getUserByEmail(email);
+/**
+ * POST /api/auth/login — email + password sign-in.
+ * Body: { email, password }. Response: { accessToken, user }.
+ * 403 with details { needsVerification, email } when the email is unverified.
+ */
+export const POST = route(async (req: NextRequest) => {
+  const ip = getClientIp(req);
+  enforceRateLimit(`login:ip:${ip}`, 50, 15 * MINUTE);
+  const { email, password } = loginSchema.parse(await readJson(req));
+  enforceRateLimit(`login:${ip}:${email}`, 10, 15 * MINUTE);
 
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, email: true, username: true, password: true, isVerified: true, isBanned: true },
+  });
+
+  const valid = await checkPassword(password, user?.password);
+  if (!user || !valid) throw unauthorized(INVALID);
+
+  if (user.isBanned) throw forbidden("Your account has been suspended. Contact support.");
+
+  if (!user.isVerified) {
+    // Re-send a fresh code, but never more than once a minute per email.
     if (
-      !user ||
-      !user.password ||
-      !(await bcrypt.compare(password, user.password))
+      checkRateLimit(`resend:email:min:${email}`, 1, MINUTE).allowed &&
+      checkRateLimit(`resend:email:hour:${email}`, 5, 60 * MINUTE).allowed
     ) {
-      return NextResponse.json(
-        { message: "Invalid credentials", success: false },
-        { status: 401 }
-      );
+      await issueCode(user, "verify");
     }
-
-    if (!user.isVerified) {
-      return NextResponse.json(
-        { message: "User not verified", success: false },
-        { status: 401 }
-      );
-    }
-
-    const accessToken = generateAccessToken(user.id);
-    const refreshToken = generateRefreshToken(user.id);
-
-    const cookieStore = await cookies();
-    cookieStore.set("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-    });
-
-    return NextResponse.json({ accessToken, success: true }, { status: 200 });
-  } catch (error) {
-    console.log("Login Error:", error);
-    return NextResponse.json(
-      { error: "Internal server error", success: false },
-      { status: 500 }
-    );
+    throw new ApiError(403, "Please verify your email", { needsVerification: true, email: user.email });
   }
-}
+
+  return ok(await signIn(user.id, req));
+});

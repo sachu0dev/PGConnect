@@ -1,25 +1,12 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { endSession } from "@/server/auth/session";
+import { ok, route } from "@/server/http";
 
-export async function POST() {
+/** POST /api/auth/logout — revokes the current session. Always succeeds. */
+export const POST = route(async () => {
   try {
-    const cookieStore = await cookies();
-    cookieStore.set("refreshToken", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 0,
-    });
-
-    return NextResponse.json(
-      { message: "Logout successful", success: true },
-      { status: 200 }
-    );
+    await endSession();
   } catch (error) {
-    console.log("Logout Error:", error);
-    return NextResponse.json(
-      { error: "Internal server error", success: false },
-      { status: 500 }
-    );
+    console.error("[auth] logout failed", error);
   }
-}
+  return ok({ loggedOut: true });
+});

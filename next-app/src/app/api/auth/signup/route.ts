@@ -1,93 +1,57 @@
-import { sendVerificationEmail } from "@/helpers/sendVerificationEmail";
-import bcrypt from "bcryptjs";
+import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { registerSchema } from "@/lib/validation";
+import { ApiError, conflict, getClientIp, ok, readJson, route } from "@/server/http";
+import { enforceRateLimit } from "@/server/rate-limit";
+import { MINUTE, findUsernameOwner, hashPassword, issueCode } from "../_lib/helpers";
 
-export async function POST(request: Request) {
-  try {
-    const { username, email, password, phoneNumber } = await request.json();
+/**
+ * POST /api/auth/signup — creates (or refreshes) an unverified account and
+ * emails a 6-digit verification code. Body: { username, email, phoneNumber?, password }.
+ * Response: { email }.
+ */
+export const POST = route(async (req: NextRequest) => {
+  enforceRateLimit(`signup:ip:${getClientIp(req)}`, 5, 10 * MINUTE);
+  const body = registerSchema.parse(await readJson(req));
+  enforceRateLimit(`signup:email:${body.email}`, 5, 60 * MINUTE);
 
-    const existingUserByUsername = await prisma.user.findFirst({
-      where: {
-        username,
-        isVerified: true,
-      },
+  const existing = await prisma.user.findUnique({
+    where: { email: body.email },
+    select: { id: true, isVerified: true, isBanned: true },
+  });
+  if (existing?.isVerified || existing?.isBanned) {
+    throw conflict("An account with this email already exists — log in instead");
+  }
+
+  const usernameOwner = await findUsernameOwner(body.username);
+  if (usernameOwner && usernameOwner.id !== existing?.id) {
+    throw new ApiError(409, "This username is already taken. Try another one.", {
+      username: ["This username is already taken"],
     });
+  }
 
-    if (existingUserByUsername) {
-      return new NextResponse(
-        JSON.stringify({
-          success: false,
-          message: "Username is already taken",
-        }),
-        { status: 400 }
-      );
-    }
-
-    const existingUserByEmail = await prisma.user.findFirst({
-      where: {
-        email,
-      },
-    });
-
-    const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    if (existingUserByEmail) {
-      if (existingUserByEmail.isVerified) {
-        return new NextResponse(
-          JSON.stringify({ success: false, message: "Email is already taken" }),
-          { status: 400 }
-        );
-      }
-
-      await prisma.user.update({
-        where: { id: existingUserByEmail.id },
-        data: {
-          username,
-          password: hashedPassword,
-          verifyCode,
-          verifyCodeExpireAt: new Date(Date.now() + 3600000),
-        },
+  const data = {
+    username: body.username,
+    password: await hashPassword(body.password),
+    phoneNumber: body.phoneNumber ?? null,
+  };
+  const user = existing
+    ? await prisma.user.update({
+        where: { id: existing.id },
+        data,
+        select: { id: true, email: true, username: true },
+      })
+    : await prisma.user.create({
+        data: { ...data, email: body.email },
+        select: { id: true, email: true, username: true },
       });
-    } else {
-      await prisma.user.create({
-        data: {
-          username: username,
-          email: email,
-          phoneNumber: phoneNumber,
-          password: hashedPassword,
-          verifyCode,
-          verifyCodeExpireAt: new Date(Date.now() + 3600000),
-        },
-      });
-    }
 
-    const emailResponse = await sendVerificationEmail(
-      email,
-      username,
-      verifyCode
-    );
-
-    if (!emailResponse.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: emailResponse.message,
-        },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: true, message: "User registered, verification email sent" },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.log("Error registering user:", error);
-    return new Response(
-      JSON.stringify({ success: false, message: "Error registering user" }),
-      { status: 500 }
+  const sent = await issueCode(user, "verify");
+  if (!sent.success) {
+    throw new ApiError(
+      503,
+      "We couldn't send the verification email right now. Please try again in a minute."
     );
   }
-}
+  return ok({ email: user.email }, 201);
+});
