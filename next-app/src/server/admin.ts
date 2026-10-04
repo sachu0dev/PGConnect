@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { notFound } from "./http";
 import type { Paginated } from "@/lib/types";
 
 /* ------------------------------------------------------------------ */
@@ -437,5 +438,10 @@ export async function setUserBanned(id: string, isBanned: boolean) {
   return prisma.user.update({ where: { id }, data: { isBanned }, select: userSelect });
 }
 
-/** Validates a path id parameter (all our ids are UUIDs). */
-export const idParam = z.string().uuid("Invalid id");
+const uuidSchema = z.string().uuid();
+
+/** Validates a path id (all our ids are UUIDs); malformed ids are simply "not found". */
+export function parseId(value: string, label = "Record"): string {
+  if (!uuidSchema.safeParse(value).success) throw notFound(`${label} not found`);
+  return value;
+}

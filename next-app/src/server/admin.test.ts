@@ -54,3 +54,11 @@ describe("toAdminUser", () => {
     expect(toAdminUser(row, [])).toMatchObject({ listingCount: 3, createdAt: "2026-01-01T00:00:00.000Z" });
   });
 });
+
+describe("parseId", () => {
+  it("passes UUIDs through and 404s anything else", async () => {
+    const { parseId } = await import("./admin");
+    expect(parseId("3f1c2b8e-1d2a-4c3b-9e8f-0a1b2c3d4e5f")).toBe("3f1c2b8e-1d2a-4c3b-9e8f-0a1b2c3d4e5f");
+    expect(() => parseId("../etc/passwd", "User")).toThrowError("User not found");
+  });
+});

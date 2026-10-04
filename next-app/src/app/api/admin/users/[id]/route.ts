@@ -1,6 +1,6 @@
 import { requireUser } from "@/server/auth/guard";
 import { revokeAllSessions } from "@/server/auth/session";
-import { findUserForAdmin, idParam, setUserBanned, toAdminUser, userBanSchema } from "@/server/admin";
+import { findUserForAdmin, parseId, setUserBanned, toAdminUser, userBanSchema } from "@/server/admin";
 import { env } from "@/server/env";
 import { badRequest, forbidden, notFound, ok, readJson, route } from "@/server/http";
 import { enforceRateLimit } from "@/server/rate-limit";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const PATCH = route<{ id: string }>(async (req, { params }) => {
   const admin = await requireUser(req, { admin: true });
   enforceRateLimit(`admin:user:${admin.id}`, 60, 60_000);
-  const id = idParam.parse((await params).id);
+  const id = parseId((await params).id, "User");
   const { isBanned } = userBanSchema.parse(await readJson(req));
 
   if (id === admin.id) throw badRequest("You cannot change the ban status of your own account");

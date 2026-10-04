@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/server/auth/guard";
-import { idParam } from "@/server/admin";
+import { parseId } from "@/server/admin";
 import { notFound, ok, route } from "@/server/http";
 import { getPrivateDocument } from "@/server/storage";
 
@@ -21,7 +21,7 @@ const EXT_TYPES: Record<string, string> = {
  */
 export const GET = route<{ id: string }>(async (req, { params }) => {
   await requireUser(req, { admin: true });
-  const id = idParam.parse((await params).id);
+  const id = parseId((await params).id, "Verification request");
 
   const verification = await prisma.ownerVerification.findUnique({
     where: { id },

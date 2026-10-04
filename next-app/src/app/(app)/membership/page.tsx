@@ -1,211 +1,100 @@
-"use client";
-import MembershipCard from "@/components/specific/Membership";
-import { Button } from "@/components/ui/button";
-import { useAppSelector } from "@/lib/hooks";
-import { useState, useEffect } from "react";
-import api from "@/lib/axios";
-import { toast } from "sonner";
-import { formatDistance } from "date-fns";
-import { Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { MembershipPlans } from "@/components/billing/membership-plans";
+import { PLANS, SUPPORT_EMAIL } from "@/lib/constants";
 
-type Membership = "FREE" | "BASIC" | "PREMIUM";
-type SubscriptionStatus =
-  | "ACTIVE"
-  | "PENDING"
-  | "CANCELLED"
-  | "COMPLETED"
-  | "PAUSED";
+export const metadata: Metadata = {
+  title: "Plans & pricing for PG owners",
+  description: `List your first PG free on PGConnect. Upgrade to ${PLANS.BASIC.name} or ${PLANS.PREMIUM.name} to list more properties and get priority placement. Monthly plans, cancel anytime.`,
+  alternates: { canonical: "/membership" },
+};
 
-interface SubscriptionDetails {
-  id: string;
-  userId: string;
-  plan: Membership;
-  startDate?: Date;
-  endDate?: Date;
-  lastPaymentDate?: Date;
-  status: SubscriptionStatus;
-  razorpaySubscriptionId: string;
-  amount: number;
-}
-
-const demoPlanes = [
+const FAQS = [
   {
-    tag: "FREE",
-    title: "Free",
-    price: 0,
-    features: [
-      "Maximum of 1 PG listing",
-      "Limited management access",
-      "Basic ability to edit PG details",
-      "No additional features",
-    ],
+    q: "Can I cancel anytime?",
+    a: (
+      <>
+        Yes. Cancel from this page whenever you like — your plan simply stops renewing. You keep the paid features until
+        the end of the month you&apos;ve already paid for, then move to the free {PLANS.FREE.name} plan. Listings above
+        the free limit are paused, not deleted.
+      </>
+    ),
   },
   {
-    tag: "BASIC",
-    title: "Basic",
-    price: 500,
-    features: [
-      "Maximum of 5 PG listings",
-      "Full management access",
-      "Ability to edit PG details",
-      "Callback request feature with email notification",
-      "No advertising capabilities",
-    ],
+    q: "Are taxes included in the price?",
+    a: <>Prices shown are per month and exclusive of applicable taxes, which are added at checkout.</>,
   },
   {
-    tag: "PREMIUM",
-    title: "Premium",
-    price: 5000,
-    features: [
-      "Maximum of 20 PG listings",
-      "Full management access",
-      "Ability to edit PG details",
-      "Callback request feature with email notification",
-      "Advertising feature",
-    ],
+    q: "How do I pay?",
+    a: (
+      <>
+        Payments are processed securely by Razorpay — UPI, cards and other supported methods. Plans renew monthly until
+        you cancel. We never see or store your card details.
+      </>
+    ),
+  },
+  {
+    q: "Can I switch between plans?",
+    a: (
+      <>
+        To move to a different paid plan, cancel your current plan first; you can subscribe to the new plan once the
+        current billing period ends.
+      </>
+    ),
+  },
+  {
+    q: "Do you offer refunds?",
+    a: (
+      <>
+        Duplicate charges, failed activations and charges after cancellation are refunded in full. See our{" "}
+        <Link href="/refund-policy" className="text-primary underline-offset-4 hover:underline">
+          refund policy
+        </Link>{" "}
+        for details, or write to{" "}
+        <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary underline-offset-4 hover:underline">
+          {SUPPORT_EMAIL}
+        </a>
+        .
+      </>
+    ),
   },
 ];
 
-const MembershipPage = () => {
-  const { userData } = useAppSelector((state) => state.user);
-  const [subscription, setSubscription] = useState<SubscriptionDetails | null>(
-    null
-  );
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchSubscriptionDetails = async () => {
-      if (!userData) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        const response = await api.get("/api/subscriptions/current");
-
-        if (response.data.subscription) {
-          setSubscription(response.data.subscription);
-        }
-      } catch (error) {
-        console.error("Error fetching subscription:", error);
-        toast.error("Failed to fetch subscription details");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSubscriptionDetails();
-  }, [userData]);
-
-  const getStatusIcon = (status: SubscriptionStatus) => {
-    switch (status) {
-      case "ACTIVE":
-        return <CheckCircle className="text-green-500" />;
-      case "CANCELLED":
-        return <XCircle className="text-red-500" />;
-      case "PENDING":
-        return <Clock className="text-yellow-500" />;
-      case "PAUSED":
-        return <AlertCircle className="text-orange-500" />;
-      default:
-        return <AlertCircle className="text-gray-500" />;
-    }
-  };
-
-  const renderSubscriptionDetails = () => {
-    if (!subscription) return null;
-
-    return (
-      <div className="w-full max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          {getStatusIcon(subscription.status)}
-          Current Subscription
-        </h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="font-medium text-gray-600">Plan</p>
-            <p className="font-bold">{subscription.plan} Plan</p>
-          </div>
-          <div>
-            <p className="font-medium text-gray-600">Status</p>
-            <p className="capitalize">{subscription.status.toLowerCase()}</p>
-          </div>
-          {subscription.startDate && (
-            <div>
-              <p className="font-medium text-gray-600">Start Date</p>
-              <p>{new Date(subscription.startDate).toLocaleDateString()}</p>
-            </div>
-          )}
-          {subscription.endDate && (
-            <div>
-              <p className="font-medium text-gray-600">Next Billing</p>
-              <p>
-                {formatDistance(new Date(subscription.endDate), new Date(), {
-                  addSuffix: true,
-                })}
-              </p>
-            </div>
-          )}
-          <div>
-            <p className="font-medium text-gray-600">Amount</p>
-            <p>₹{subscription.amount}</p>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const handleCancelSubscription = async () => {
-    if (!subscription) return;
-
-    try {
-      const response = await api.post("/api/subscriptions/cancel", {
-        subscriptionId: subscription.razorpaySubscriptionId,
-      });
-
-      if (response.data.success) {
-        toast.success("Subscription cancelled successfully");
-      } else {
-        toast.error(response.data.error || "Failed to cancel subscription");
-      }
-    } catch (error) {
-      console.error("Cancellation error:", error);
-      toast.error("An error occurred while cancelling the subscription");
-    }
-  };
-
+export default function MembershipPage() {
   return (
-    <div className="min-h-[calc(100vh-69px)] w-full flex flex-col py-8 items-center bg-primary1/10">
-      <h1 className="text-2xl font-medium mb-8 text-primary1">Membership</h1>
+    <div className="container py-10 md:py-14">
+      <header className="mx-auto max-w-2xl text-center">
+        <p className="text-sm font-semibold uppercase tracking-wide text-primary">Plans & pricing</p>
+        <h1 className="mt-2 text-balance text-3xl font-bold tracking-tight sm:text-4xl">
+          Simple plans for PG owners
+        </h1>
+        <p className="mt-3 text-muted-foreground">
+          Start free with one listing. Upgrade when you have more properties to fill. No brokerage, no commission.
+        </p>
+      </header>
 
-      {isLoading ? (
-        <div className="text-center">Loading subscription details...</div>
-      ) : (
-        <>
-          {subscription && renderSubscriptionDetails()}
+      <div className="mx-auto mt-10 max-w-6xl">
+        <MembershipPlans />
+      </div>
 
-          {subscription && subscription.status === "ACTIVE" && (
-            <div className="mb-8">
-              <Button
-                variant="destructive"
-                onClick={handleCancelSubscription}
-                className="bg-red-500 hover:bg-red-600"
-              >
-                Cancel Subscription
-              </Button>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {demoPlanes.map((plane, index) => (
-              <MembershipCard key={index} plane={plane} />
-            ))}
-          </div>
-        </>
-      )}
+      <section className="mx-auto mt-16 max-w-3xl" aria-labelledby="pricing-faq">
+        <h2 id="pricing-faq" className="text-2xl font-bold tracking-tight">
+          Frequently asked questions
+        </h2>
+        <div className="mt-5 divide-y rounded-xl border bg-card">
+          {FAQS.map((f) => (
+            <details key={f.q} className="group px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                {f.q}
+                <span className="text-xl leading-none text-muted-foreground transition-transform group-open:rotate-45">
+                  +
+                </span>
+              </summary>
+              <p className="mt-2 text-sm text-muted-foreground">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
     </div>
   );
-};
-
-export default MembershipPage;
+}

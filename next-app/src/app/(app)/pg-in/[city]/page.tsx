@@ -195,7 +195,7 @@ export default async function CityPage({ params }: PageProps) {
                 <div className="text-center">
                   <Button asChild size="lg" variant="outline">
                     <Link href={`/pgs?city=${encodeURIComponent(city)}&page=2`}>
-                      View all {data.count} PGs in {name} <ArrowRight />
+                      See more PGs in {name} <ArrowRight />
                     </Link>
                   </Button>
                 </div>

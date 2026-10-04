@@ -1,26 +1,75 @@
-version: "3.9"
+# Production-style stack: Postgres + web app + realtime socket server.
+#
+#   cp next-app/.env.example next-app/.env   # fill in secrets
+#   docker compose up -d --build
+#
+# The web app applies pending migrations on start (RUN_MIGRATIONS=true).
+# Seed demo data (dev only) from your machine: cd next-app && yarn db:seed
+
+name: pgconnect
 
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pgconnect}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   next-app:
     build:
       context: ./next-app
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+        NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:4000}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+        AWS_REGION: ${AWS_REGION:-}
+        AWS_BUCKET_NAME: ${AWS_BUCKET_NAME:-}
+        AWS_PUBLIC_BASE_URL: ${AWS_PUBLIC_BASE_URL:-}
+    restart: unless-stopped
+    env_file:
+      - ./next-app/.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-pgconnect}
+      # Server-to-server push goes over the compose network.
+      SOCKET_INTERNAL_URL: http://socket-server:4000
+      RUN_MIGRATIONS: "true"
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_SOCKET_SERVER=http://localhost:4000
-    volumes:
-      - ./next-app:/app
-      - /app/node_modules
     depends_on:
-      - socket-server
+      db:
+        condition: service_healthy
+      socket-server:
+        condition: service_started
 
   socket-server:
     build:
       context: ./socket-server
       dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./next-app/.env
+    environment:
+      PORT: "4000"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-pgconnect}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
     ports:
       - "4000:4000"
-    volumes:
-      - ./socket-server:/app
-      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

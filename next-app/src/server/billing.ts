@@ -22,6 +22,8 @@ export type SubscriptionInfo = {
   startDate: string | null;
   endDate: string | null;
   lastPaymentDate: string | null;
+  /** True when the user cancelled and the plan ends at `endDate` (no more renewals). */
+  cancelAtPeriodEnd: boolean;
   createdAt: string;
 };
 
@@ -61,6 +63,7 @@ function toInfo(row: {
   startDate: Date | null;
   endDate: Date | null;
   lastPaymentDate: Date | null;
+  cancellationDate: Date | null;
   createdAt: Date;
 }): SubscriptionInfo {
   const plan = row.plan === "PREMIUM" ? "PREMIUM" : "BASIC";
@@ -74,8 +77,29 @@ function toInfo(row: {
     startDate: row.startDate?.toISOString() ?? null,
     endDate: row.endDate?.toISOString() ?? null,
     lastPaymentDate: row.lastPaymentDate?.toISOString() ?? null,
+    cancelAtPeriodEnd: row.status === "ACTIVE" && row.cancellationDate !== null,
     createdAt: row.createdAt.toISOString(),
   };
+}
+
+/** Grace period before we end a cancelled plan ourselves if Razorpay's webhook never arrived. */
+const CANCEL_GRACE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Safety net: plans cancelled "at period end" whose period is over are closed
+ * locally even if the subscription.cancelled webhook was missed.
+ */
+export async function expireEndedSubscriptions(userId: string) {
+  const result = await prisma.subscription.updateMany({
+    where: {
+      userId,
+      status: "ACTIVE",
+      cancellationDate: { not: null },
+      endDate: { lt: new Date(Date.now() - CANCEL_GRACE_MS) },
+    },
+    data: { status: "CANCELLED" },
+  });
+  if (result.count > 0) await syncMembership(userId);
 }
 
 /**
@@ -126,14 +150,23 @@ export async function createCheckout(user: AuthUser, plan: "BASIC" | "PREMIUM"):
     throw new ApiError(503, "Online payments are coming soon. Please contact support to upgrade your plan.");
   }
 
+  await expireEndedSubscriptions(user.id);
   const active = await prisma.subscription.findFirst({
     where: { userId: user.id, status: "ACTIVE" },
-    select: { plan: true },
+    select: { plan: true, cancellationDate: true, endDate: true },
   });
   if (active) {
     const name = PLANS[active.plan === "PREMIUM" ? "PREMIUM" : "BASIC"].name;
+    if (active.cancellationDate) {
+      const ends = active.endDate
+        ? active.endDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+        : "the end of the current billing period";
+      throw conflict(
+        `Your ${name} plan is cancelled and stays active until ${ends}. You can subscribe to a new plan after it ends.`
+      );
+    }
     throw conflict(
-      `You already have an active ${name} plan. To switch plans, cancel it first — the new plan starts as soon as you subscribe again.`
+      `You already have an active ${name} plan. To switch plans, cancel it first — you can subscribe to the new plan once the current one ends.`
     );
   }
 
@@ -225,6 +258,8 @@ export async function verifyCheckout(user: AuthUser, input: z.infer<typeof verif
 /* -------------------------------------------------------------------------- */
 
 export async function currentSubscription(user: AuthUser) {
+  await expireEndedSubscriptions(user.id);
+  const fresh = await prisma.user.findUnique({ where: { id: user.id }, select: { membership: true } });
   const active = await prisma.subscription.findFirst({
     where: { userId: user.id, status: "ACTIVE" },
     orderBy: { createdAt: "desc" },
@@ -242,7 +277,7 @@ export async function currentSubscription(user: AuthUser) {
   const row = active ?? pending;
   return {
     subscription: row ? toInfo(row) : null,
-    membership: user.membership,
+    membership: fresh?.membership ?? user.membership,
     paymentsEnabled: features.payments,
   };
 }
@@ -253,7 +288,24 @@ export async function currentSubscription(user: AuthUser) {
 
 const TERMINAL_REMOTE = new Set(["cancelled", "completed", "expired"]);
 
-export async function cancelSubscriptionFor(user: AuthUser, subscriptionId: string) {
+export type CancelResult = {
+  membership: PlanId;
+  /** Listings paused right now (immediate cancellations only). */
+  pausedListings: number;
+  /** When the paid plan ends for cancellations scheduled at period end. */
+  endsAt: string | null;
+  /** Listings that will be paused when the plan ends (beyond the free limit). */
+  listingsToPause: number;
+};
+
+/**
+ * Cancels a subscription. A paid, ACTIVE plan stops renewing and stays active
+ * until the end of the period already paid for (as promised in the refund
+ * policy); Razorpay then sends subscription.cancelled and the webhook moves the
+ * user to the free plan, pausing extra listings. A PENDING (never paid)
+ * subscription is cancelled immediately.
+ */
+export async function cancelSubscriptionFor(user: AuthUser, subscriptionId: string): Promise<CancelResult> {
   const sub = await prisma.subscription.findFirst({
     where: {
       userId: user.id,
@@ -264,12 +316,16 @@ export async function cancelSubscriptionFor(user: AuthUser, subscriptionId: stri
   if (sub.status !== "ACTIVE" && sub.status !== "PENDING") {
     throw conflict("This subscription is already inactive.");
   }
+  if (sub.status === "ACTIVE" && sub.cancellationDate) {
+    throw conflict("This plan is already cancelled and won't renew.");
+  }
 
   enforceRateLimit(`subscription-cancel:${user.id}`, 10, 60 * 60 * 1000);
 
+  const atPeriodEnd = sub.status === "ACTIVE";
   if (features.payments) {
     try {
-      await razorpay().subscriptions.cancel(sub.razorpaySubscriptionId, false);
+      await razorpay().subscriptions.cancel(sub.razorpaySubscriptionId, atPeriodEnd);
     } catch (error) {
       // Already cancelled/finished on Razorpay's side is fine; anything else is not.
       let remoteStatus: string | null = null;
@@ -286,12 +342,24 @@ export async function cancelSubscriptionFor(user: AuthUser, subscriptionId: stri
     }
   }
 
+  const now = new Date();
+  if (atPeriodEnd && sub.endDate && sub.endDate > now) {
+    await prisma.subscription.update({ where: { id: sub.id }, data: { cancellationDate: now } });
+    const active = await prisma.pg.count({ where: { ownerId: user.id, status: "ACTIVE" } });
+    return {
+      membership: user.membership,
+      pausedListings: 0,
+      endsAt: sub.endDate.toISOString(),
+      listingsToPause: Math.max(0, active - PLANS.FREE.listingLimit),
+    };
+  }
+
   await prisma.subscription.update({
     where: { id: sub.id },
-    data: { status: "CANCELLED", cancellationDate: new Date() },
+    data: { status: "CANCELLED", cancellationDate: now },
   });
   const { membership, pausedListings } = await syncMembership(user.id);
-  return { membership, pausedListings };
+  return { membership, pausedListings, endsAt: null, listingsToPause: 0 };
 }
 
 /* -------------------------------------------------------------------------- */
