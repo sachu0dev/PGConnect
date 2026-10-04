@@ -54,7 +54,7 @@ function CountBadge({ count, className }: { count: number; className?: string })
     <span
       className={cn(
         "ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold leading-5 text-primary-foreground",
-        className
+        className,
       )}
     >
       {count > 99 ? "99+" : count}
@@ -62,7 +62,7 @@ function CountBadge({ count, className }: { count: number; className?: string })
   );
 }
 
-function DashboardNav() {
+function DashboardNav({ variant }: { variant: "desktop" | "mobile" }) {
   const pathname = usePathname();
   const { overview } = useDashboard();
   const unread = useUnreadCount();
@@ -73,12 +73,11 @@ function DashboardNav() {
   }, [pathname]);
 
   const countFor = (item: NavItem) =>
-    item.badge === "leads" ? overview?.leads.new ?? 0 : item.badge === "messages" ? unread : 0;
+    item.badge === "leads" ? (overview?.leads.new ?? 0) : item.badge === "messages" ? unread : 0;
 
-  return (
-    <>
-      {/* Desktop sidebar */}
-      <nav aria-label="Owner dashboard" className="hidden lg:block">
+  if (variant === "desktop") {
+    return (
+      <nav aria-label="Owner dashboard">
         <ul className="space-y-1">
           {NAV.map((item) => {
             const active = isActive(pathname, item);
@@ -92,7 +91,7 @@ function DashboardNav() {
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     active
                       ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
                   <Icon className="size-4 shrink-0" />
@@ -112,40 +111,43 @@ function DashboardNav() {
           </Link>
         </div>
       </nav>
+    );
+  }
 
-      {/* Mobile tabs */}
-      <nav
-        aria-label="Owner dashboard"
-        className="sticky top-16 z-30 -mx-4 border-b bg-background/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden"
-      >
-        <ul className="scrollbar-none flex gap-1 overflow-x-auto py-2">
-          {NAV.map((item) => {
-            const active = isActive(pathname, item);
-            const Icon = item.icon;
-            return (
-              <li key={item.href} className="shrink-0">
-                <Link
-                  ref={active ? activeRef : undefined}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Icon className="size-4" />
-                  {item.label}
-                  <CountBadge
-                    count={countFor(item)}
-                    className={cn("ml-0.5", active && "bg-primary-foreground text-primary")}
-                  />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </>
+  return (
+    <nav
+      aria-label="Owner dashboard"
+      className="sticky top-16 z-30 -mx-4 border-b bg-background/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden"
+    >
+      <ul className="scrollbar-none flex gap-1 overflow-x-auto py-2">
+        {NAV.map((item) => {
+          const active = isActive(pathname, item);
+          const Icon = item.icon;
+          return (
+            <li key={item.href} className="shrink-0">
+              <Link
+                ref={active ? activeRef : undefined}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="size-4" />
+                {item.label}
+                <CountBadge
+                  count={countFor(item)}
+                  className={cn("ml-0.5", active && "bg-primary-foreground text-primary")}
+                />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
 
@@ -198,15 +200,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div className="container flex-1 py-4 lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8 lg:py-8">
           {ready && isOwner ? (
             <>
-              <aside className="lg:sticky lg:top-24 lg:self-start">
-                <div className="hidden lg:block">
-                  <OwnerSummary />
-                </div>
-                <div className="pb-2 lg:hidden">
-                  <OwnerSummary compact />
-                </div>
-                <DashboardNav />
+              <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start">
+                <OwnerSummary />
+                <DashboardNav variant="desktop" />
               </aside>
+              <div className="pb-2 lg:hidden">
+                <OwnerSummary compact />
+              </div>
+              <DashboardNav variant="mobile" />
               <main id="main" className="min-w-0 pt-4 lg:pt-0">
                 {children}
               </main>

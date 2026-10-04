@@ -12,9 +12,9 @@ import { DashboardHeading } from "./dashboard-shell";
 
 export function CreateListingView() {
   const { user } = useAuth();
-  const { overview, loading } = useDashboard();
+  const { overview, loading, error } = useDashboard();
 
-  if (loading && !overview) {
+  if (!overview && (loading || !error)) {
     return (
       <div className="space-y-4" aria-busy="true">
         <Skeleton className="h-8 w-48" />

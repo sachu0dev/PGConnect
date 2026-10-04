@@ -95,7 +95,7 @@ export function OverviewView() {
   const { user } = useAuth();
   const { overview, loading, error, refresh } = useDashboard();
 
-  if (loading && !overview) {
+  if (!overview && (loading || !error)) {
     return (
       <div className="space-y-6" aria-busy="true">
         <Skeleton className="h-8 w-60" />
