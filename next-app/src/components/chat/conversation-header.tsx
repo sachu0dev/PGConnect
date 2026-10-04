@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatINR } from "@/lib/format";
+import { formatINR, titleCase } from "@/lib/format";
 import type { ChatRoomMeta } from "@/server/chat-queries";
 import { PgThumb } from "./pg-thumb";
 import { UserAvatar } from "./user-avatar";
@@ -58,7 +58,7 @@ export function ConversationHeader({ meta, typing }: { meta: ChatRoomMeta | null
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold">{meta.pg.name}</span>
             <span className="block truncate text-xs text-muted-foreground">
-              {[meta.pg.locality, meta.pg.city].filter(Boolean).join(", ")}
+              {[meta.pg.locality, titleCase(meta.pg.city)].filter(Boolean).join(", ")}
               {!meta.pg.isActive ? " · Not taking enquiries" : ""}
             </span>
           </span>
