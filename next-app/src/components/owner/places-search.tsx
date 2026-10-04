@@ -1,13 +1,12 @@
 "use client";
 
 import { useRef } from "react";
-import { Autocomplete, useJsApiLoader, type Libraries } from "@react-google-maps/api";
+import { Autocomplete, useJsApiLoader } from "@react-google-maps/api";
+import { MAPS_LIBRARIES, MAPS_LOADER_ID } from "@/components/search/maps-config";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-// Must be a stable reference and match other loaders in the app (id + libraries).
-const LIBRARIES: Libraries = ["places"];
 
 export type PlaceResult = {
   address: string;
@@ -31,9 +30,9 @@ function component(place: google.maps.places.PlaceResult, ...types: string[]) {
  */
 export function PlacesSearch({ apiKey, onPlace }: { apiKey: string; onPlace: (place: PlaceResult) => void }) {
   const { isLoaded, loadError } = useJsApiLoader({
-    id: "google-map-script",
+    id: MAPS_LOADER_ID,
     googleMapsApiKey: apiKey,
-    libraries: LIBRARIES,
+    libraries: MAPS_LIBRARIES,
   });
   const autocomplete = useRef<google.maps.places.Autocomplete | null>(null);
 

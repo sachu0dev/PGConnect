@@ -42,7 +42,7 @@ const deleteSchema = z.object({
   password: z.string().max(72).optional(),
 });
 
-const OPEN_SUBSCRIPTION_STATES = ["CREATED", "PENDING", "AUTHENTICATED", "ACTIVE"];
+const OPEN_SUBSCRIPTION_STATES = ["PENDING", "ACTIVE", "PAUSED"];
 
 /**
  * DELETE /api/account — permanently deletes the signed-in account.

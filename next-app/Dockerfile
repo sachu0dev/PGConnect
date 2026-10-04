@@ -77,8 +77,10 @@ fi
 exec "$@"
 EOF
 
-# Local-storage fallback dirs (only used when S3 is not configured).
-RUN mkdir -p public/uploads .private-uploads && chown -R nextjs:nodejs public/uploads .private-uploads
+# Local storage driver (STORAGE_DRIVER=local). Mount a persistent volume here.
+ENV STORAGE_LOCAL_DIR=/app/storage
+RUN mkdir -p /app/storage && chown -R nextjs:nodejs /app/storage
+VOLUME ["/app/storage"]
 
 USER nextjs
 EXPOSE 3000

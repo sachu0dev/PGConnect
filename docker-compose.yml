@@ -46,6 +46,10 @@ services:
       # Server-to-server push goes over the compose network.
       SOCKET_INTERNAL_URL: http://socket-server:4000
       RUN_MIGRATIONS: "true"
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+    volumes:
+      # Local storage driver: listing photos + private ID documents.
+      - uploads:/app/storage
     ports:
       - "3000:3000"
     depends_on:
@@ -73,3 +77,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

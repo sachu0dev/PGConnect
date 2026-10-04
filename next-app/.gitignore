@@ -43,4 +43,5 @@ next-env.d.ts
 # local uploads (dev fallback when S3 is not configured)
 /public/uploads
 /.private-uploads
+/storage
 !.env.example

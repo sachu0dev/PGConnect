@@ -31,3 +31,16 @@ describe("sniffFileType", () => {
     expect(sniffFileType(Buffer.alloc(0))).toBeNull();
   });
 });
+
+describe("locateUrl", () => {
+  it("maps local /uploads URLs to pg-images keys", async () => {
+    const { locateUrl } = await import("./storage");
+    expect(locateUrl("/uploads/owner-1/123-abc.jpg")).toEqual({ driver: "local", key: "pg-images/owner-1/123-abc.jpg" });
+  });
+
+  it("rejects traversal and foreign URLs", async () => {
+    const { locateUrl } = await import("./storage");
+    expect(locateUrl("/uploads/../secret")).toBeNull();
+    expect(locateUrl("https://evil.example.com/pg-images/x.jpg")).toBeNull();
+  });
+});

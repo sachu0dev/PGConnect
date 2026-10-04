@@ -67,7 +67,7 @@ upgrade to paid plans via Razorpay. Admins moderate listings, reports, users and
 | UI | Tailwind CSS, Radix UI primitives (shadcn-style), lucide icons, sonner toasts, next-themes |
 | Data | PostgreSQL 16, Prisma 5 |
 | Auth | Email OTP + password (bcrypt), Google Identity Services, short-lived JWT + rotating DB sessions |
-| Files | AWS S3 (public `pg-images/*`, private `private/*` with signed URLs) |
+| Files | Hybrid storage: local disk (default) or AWS S3, switched with `STORAGE_DRIVER` |
 | Email | Resend + React Email templates |
 | Payments | Razorpay Subscriptions + webhooks |
 | Realtime | Socket.IO server (Node 22) |
@@ -107,8 +107,8 @@ Demo logins created by the seed (password `Password123`, development only):
 | `owner3@pgconnect.dev` | Free-plan owner |
 | `tenant@pgconnect.dev` | Tenant with a shortlist, enquiries and a chat |
 
-Without AWS/Resend/Razorpay keys the app still works locally: uploads go to `public/uploads` and
-`.private-uploads`, emails (including OTP codes) are printed to the server log, and checkout is disabled.
+Without Resend/Razorpay keys the app still works locally: uploads use the local storage driver
+(`STORAGE_DRIVER=local`, files in `./storage`, photos served at `/uploads/*`), emails (including OTP codes) are printed to the server log, and checkout is disabled.
 
 To run the whole stack in containers (production-style, no bind mounts):
 
@@ -132,7 +132,9 @@ Full, commented list: [`next-app/.env.example`](next-app/.env.example) and `sock
 | `JWT_SECRET` | yes (prod) | Signs access tokens; must match the socket server |
 | `NEXT_PUBLIC_SITE_URL` | yes (prod) | Canonical origin for SEO, sitemap and email links (build time) |
 | `ADMIN_EMAILS` | recommended | Comma-separated emails with admin access |
-| `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_BUCKET_NAME` | yes (prod) | S3 storage for photos and ID documents |
+| `STORAGE_DRIVER` | no | `local` (default) or `s3` — where new photos/ID documents are stored |
+| `STORAGE_LOCAL_DIR` | no | Folder for the local driver (default `./storage`; use a persistent volume) |
+| `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_BUCKET_NAME` | when `STORAGE_DRIVER=s3` | S3 storage for photos and ID documents |
 | `AWS_PUBLIC_BASE_URL` | no | CDN/custom domain in front of the bucket |
 | `RESEND_API_KEY`, `EMAIL_FROM` | yes (prod) | Transactional email (OTP, leads, decisions) |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_ID` | no | Sign in with Google |
@@ -171,7 +173,18 @@ A simple, low-cost production setup:
   `CLIENT_ORIGIN=https://your-domain`.
 - On the web app set `NEXT_PUBLIC_SOCKET_URL` (public `wss://` URL) and `SOCKET_INTERNAL_URL`.
 
-### 4. AWS S3
+### 4. File storage (local or S3)
+Storage is hybrid. `STORAGE_DRIVER` decides where **new** uploads go; files written earlier by the other
+driver keep working, so you can switch at any time.
+
+- **Local (default, `STORAGE_DRIVER=local`)**: photos and ID documents are written to `STORAGE_LOCAL_DIR`
+  (default `./storage`). Listing photos are served by the app at `/uploads/*` with long-lived cache headers; ID
+  documents live under `storage/private/` and are only readable by admins through the API. Use a persistent disk
+  (the Docker image declares a volume at `/app/storage`; compose mounts `uploads`). Back this folder up together
+  with the database. Not suitable for serverless hosts with ephemeral disks (e.g. Vercel) — use S3 there.
+- **S3 (`STORAGE_DRIVER=s3`)**: set the `AWS_*` variables and configure the bucket as below.
+
+S3 bucket setup:
 - Create a bucket in `ap-south-1`. Keep **Block Public Access** on for everything except listing photos by using a
   bucket policy that allows public reads **only** for `pg-images/*`:
 

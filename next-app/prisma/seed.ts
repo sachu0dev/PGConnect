@@ -493,9 +493,9 @@ const s3Configured = Boolean(
 );
 
 async function writeLocalDocument(userId: string): Promise<string | null> {
-  if (s3Configured) return null; // Never push fake documents to a real bucket.
+  if (process.env.STORAGE_DRIVER === "s3" && s3Configured) return null; // Never push fake documents to a real bucket.
   const key = `private/verification/${userId}/seed-demo-id.png`;
-  const target = path.join(process.cwd(), ".private-uploads", key);
+  const target = path.join(process.cwd(), process.env.STORAGE_LOCAL_DIR || "storage", key);
   await fs.mkdir(path.dirname(target), { recursive: true });
   await fs.writeFile(target, placeholderIdPng());
   return key;

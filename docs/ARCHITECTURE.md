@@ -34,7 +34,8 @@ docs/            This file, launch checklist
   through `GET /api/pg/[id]/contact` to signed-in users.
 * Files: `uploadListingImage`, `deleteListingImage` (only deletes URLs we issued),
   `uploadPrivateDocument` (ID docs, private), `getPrivateDocument` (admins).
-  Without AWS env vars, dev falls back to `public/uploads` / `.private-uploads`.
+  `STORAGE_DRIVER=local|s3` (default local, files in `STORAGE_LOCAL_DIR`, photos served at `/uploads/*`);
+  reads/deletes work for files written by either driver.
 * Email: `sendEmail(to, subject, <Template/>)`; logs instead of sending without
   `RESEND_API_KEY`.
 * Realtime: `createMessage()` persists + calls `emitRealtime()` → socket server

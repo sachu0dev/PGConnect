@@ -33,6 +33,12 @@ export const env = {
     bucket: read("AWS_BUCKET_NAME"),
     publicBaseUrl: read("AWS_PUBLIC_BASE_URL"),
   },
+  storage: {
+    /** "local" (default) stores files on disk; "s3" uses the AWS_* bucket. */
+    driver: (read("STORAGE_DRIVER")?.toLowerCase() === "s3" ? "s3" : "local") as "local" | "s3",
+    /** Root folder for the local driver. Mount a persistent volume here in production. */
+    localDir: read("STORAGE_LOCAL_DIR") ?? "storage",
+  },
   resendApiKey: read("RESEND_API_KEY"),
   emailFrom: read("EMAIL_FROM") ?? "PGConnect <no-reply@pgconnect.site>",
   googleClientId: read("GOOGLE_CLIENT_ID") ?? read("NEXT_PUBLIC_GOOGLE_CLIENT_ID"),
@@ -54,6 +60,7 @@ export const env = {
 };
 
 export const features = {
+  /** True when S3 credentials are present (needed to read/delete existing S3 files). */
   get s3() {
     return Boolean(
       env.aws.region && env.aws.accessKeyId && env.aws.secretAccessKey && env.aws.bucket

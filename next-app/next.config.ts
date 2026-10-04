@@ -43,7 +43,11 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    return [{ source: "/profile", destination: "/account", permanent: true }];
+    return [
+      { source: "/profile", destination: "/account", permanent: true },
+      { source: "/dashboard/user", destination: "/account", permanent: true },
+      { source: "/dashboard/chat", destination: "/chat", permanent: true },
+    ];
   },
 };
 

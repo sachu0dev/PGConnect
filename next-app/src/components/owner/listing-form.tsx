@@ -327,11 +327,31 @@ export function ListingForm(props: CreateProps | EditProps) {
         if (value === null || value === undefined) continue;
         form.append(key, Array.isArray(value) ? JSON.stringify(value) : String(value));
       }
-      photos.forEach((p) => form.append("images", p.file));
+      // Keep each request small (serverless body limits): create with the
+      // minimum photos, then upload the rest one by one.
+      const [firstPhotos, extraPhotos] = [
+        photos.slice(0, LISTING_LIMITS.minImages),
+        photos.slice(LISTING_LIMITS.minImages),
+      ];
+      firstPhotos.forEach((p) => form.append("images", p.file));
 
       setSubmitting(true);
       try {
         const { id } = await api<{ id: string }>("/api/pg/post", { method: "POST", body: form });
+        let failedUploads = 0;
+        for (const photo of extraPhotos) {
+          const extra = new FormData();
+          extra.append("pgId", id);
+          extra.append("images", photo.file);
+          try {
+            await api("/api/dashboard/update/image", { method: "POST", body: extra });
+          } catch {
+            failedUploads += 1;
+          }
+        }
+        if (failedUploads > 0) {
+          toast.warning(`${failedUploads} photo(s) could not be uploaded — add them again from the edit page.`);
+        }
         toast.success("Your PG is live! Tenants can now find it in search.");
         router.push(`/dashboard/pgs/${id}`);
       } catch (error) {
