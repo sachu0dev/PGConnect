@@ -13,6 +13,55 @@ enum Membership {
   PREMIUM
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  ANY
+}
+
+enum ListingStatus {
+  ACTIVE // visible in search
+  PAUSED // hidden by the owner (e.g. full)
+  BLOCKED // hidden by an admin after moderation
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LeadType {
+  CALLBACK
+  VISIT
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+enum ReportReason {
+  FAKE_LISTING
+  WRONG_INFO
+  ALREADY_FULL
+  SCAM
+  OFFENSIVE
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+enum Status {
+  SENT
+  READ
+}
+
 model User {
   id                 String    @id @default(uuid())
   username           String    @unique
@@ -21,28 +70,66 @@ model User {
   phoneNumber        String?
   verifyCode         String?
   verifyCodeExpireAt DateTime?
+  verifyAttempts     Int       @default(0)
+  resetCode          String?
+  resetCodeExpireAt  DateTime?
+  resetAttempts      Int       @default(0)
   isVerified         Boolean   @default(false)
   googleId           String?   @unique
   isOwner            Boolean   @default(false)
-  aadhar             String?
-  aadharImage        String?
+  isAdmin            Boolean   @default(false)
+  isBanned           Boolean   @default(false)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
   membership Membership @default(FREE)
 
-  Pg              Pg[]
-  Message         Message[]
-  callbackRequest callbackRequest[]
-  ChatRoom        ChatRoom[]
-  Subscription    Subscription[]
-  adsCount        Int               @default(0)
+  Pg           Pg[]
+  Message      Message[]
+  leads        Lead[]
+  ChatRoom     ChatRoom[]
+  Subscription Subscription[]
+  sessions     Session[]
+  favorites    Favorite[]
+  reviews      Review[]
+  reports      Report[]
+  verification OwnerVerification?
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String   @unique
+  userAgent  String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model OwnerVerification {
+  id            String             @id @default(uuid())
+  userId        String             @unique
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName      String
+  documentType  String
+  documentLast4 String
+  // Private object key (never a public URL). Served to admins via short-lived signed URLs.
+  documentKey   String?
+  status        VerificationStatus @default(PENDING)
+  reviewNote    String?
+  createdAt     DateTime           @default(now())
+  reviewedAt    DateTime?
+
+  @@index([status])
 }
 
 model Subscription {
   id                     String    @id @default(uuid())
   userId                 String
-  user                   User      @relation(fields: [userId], references: [id])
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   razorpaySubscriptionId String    @unique
   status                 String    @default("PENDING")
   plan                   String
@@ -53,32 +140,52 @@ model Subscription {
   amount                 Float
   lastPaymentId          String?
   retryLink              String?
+  createdAt              DateTime  @default(now())
+
+  @@index([userId, status])
 }
 
 model Pg {
-  id               String   @id @default(uuid())
+  id               String        @id @default(uuid())
   name             String
   contact          String
   city             String
+  locality         String?
   address          String
+  latitude         Float?
+  longitude        Float?
   rentPerMonth     Float
+  deposit          Float         @default(0)
   description      String
   capacity         Int
-  capacityCount    Int      @default(0)
+  capacityCount    Int           @default(0)
   images           String[]
-  bhk              Int
-  isDummy          Boolean  @default(false)
-  isAcceptingGuest Boolean  @default(true)
+  sharingTypes     Int[]         @default([])
+  amenities        String[]      @default([])
+  foodIncluded     Boolean       @default(false)
+  houseRules       String?
+  noticePeriodDays Int?
   gender           Gender
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  status           ListingStatus @default(ACTIVE)
+  views            Int           @default(0)
+  avgRating        Float         @default(0)
+  reviewCount      Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id])
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  coordinates     String
-  ChatRoom        ChatRoom[]
-  callbackRequest callbackRequest[]
+  ChatRoom  ChatRoom[]
+  leads     Lead[]
+  favorites Favorite[]
+  reviews   Review[]
+  reports   Report[]
+
+  @@index([status, city])
+  @@index([status, rentPerMonth])
+  @@index([status, createdAt])
+  @@index([ownerId])
 }
 
 model City {
@@ -86,42 +193,91 @@ model City {
   name String @unique
 }
 
-model callbackRequest {
-  id          String @id @default(uuid())
+model Lead {
+  id          String     @id @default(uuid())
+  type        LeadType   @default(CALLBACK)
+  status      LeadStatus @default(NEW)
+  name        String?
   phoneNumber String
+  message     String?
+  visitDate   DateTime?
   userId      String
   pgId        String
-  user        User   @relation(fields: [userId], references: [id])
-  pg          Pg     @relation(fields: [pgId], references: [id])
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pg          Pg         @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([pgId, userId, type])
+  @@index([pgId, status])
+}
+
+model Favorite {
+  userId    String
+  pgId      String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pg        Pg       @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, pgId])
+  @@index([pgId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  userId    String
+  pgId      String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pg        Pg       @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pgId, userId])
+  @@index([pgId, createdAt])
+}
+
+model Report {
+  id        String       @id @default(uuid())
+  reason    ReportReason
+  details   String?
+  status    ReportStatus @default(OPEN)
+  userId    String
+  pgId      String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pg        Pg           @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+
+  @@unique([pgId, userId])
+  @@index([status, createdAt])
 }
 
 model ChatRoom {
-  id       String    @id
-  userId   String
-  pgId     String
-  pg       Pg        @relation(fields: [pgId], references: [id])
-  user     User      @relation(fields: [userId], references: [id])
-  messages Message[]
-}
+  id            String    @id @default(uuid())
+  userId        String
+  pgId          String
+  pg            Pg        @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      Message[]
+  createdAt     DateTime  @default(now())
+  lastMessageAt DateTime  @default(now())
 
-enum Status {
-  SENT
-  READ
+  @@unique([pgId, userId])
+  @@index([userId, lastMessageAt])
+  @@index([pgId, lastMessageAt])
 }
 
 model Message {
   id         String   @id @default(uuid())
   chatRoomId String
-  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   senderId   String
-  sender     User     @relation(fields: [senderId], references: [id])
+  sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   text       String
   createdAt  DateTime @default(now())
   status     Status   @default(SENT)
-}
 
-enum Gender {
-  MALE
-  FEMALE
-  ANY
+  @@index([chatRoomId, createdAt])
+  @@index([chatRoomId, status])
 }

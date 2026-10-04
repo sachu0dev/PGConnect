@@ -1,27 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const PROTECTED_PREFIXES = ["/dashboard", "/account", "/chat", "/admin"];
+
+/**
+ * Optimistic redirect for signed-out visitors. Real authorization happens in
+ * every API route; this only avoids flashing protected UI to guests.
+ */
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get("refreshToken");
+  const { pathname, search } = req.nextUrl;
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
-  if (
-    req.nextUrl.pathname === "/" ||
-    req.nextUrl.pathname === "/login" ||
-    req.nextUrl.pathname === "/register" ||
-    req.nextUrl.pathname.startsWith("/verify") ||
-    req.nextUrl.pathname.startsWith("/pg")
-  ) {
-    return NextResponse.next();
+  if (isProtected && !req.cookies.has("refreshToken")) {
+    const url = new URL("/login", req.url);
+    url.searchParams.set("next", `${pathname}${search}`);
+    return NextResponse.redirect(url);
   }
-
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/((?!api|_next/static|_next/image|images|assets|icons|svg|favicon.ico).*)",
-  ],
+  matcher: ["/dashboard/:path*", "/account/:path*", "/chat/:path*", "/admin/:path*"],
 };

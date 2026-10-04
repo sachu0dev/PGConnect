@@ -1,181 +1,98 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import "./globals.css";
-
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import ClientProvider from "./providers/ClientProvider";
-import StoreProvider from "./providers/StoreProvider";
-import { ThemeProvider } from "./providers/ThemeProvider";
-import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
-import Script from "next/script";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/components/providers/auth-provider";
+import "./globals.css";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
+  display: "swap",
 });
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
+  display: "swap",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://pgconnect.site";
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.pgconnect.com"
-  ),
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "PGConnect - Find Best Paying Guest Accommodations",
+    default: "PGConnect — Find verified PGs & co-living near you",
     template: "%s | PGConnect",
   },
   description:
-    "Discover and connect with verified Paying Guest (PG) accommodations across India. Find safe, comfortable, and affordable housing for students and working professionals.",
+    "Search verified paying guest (PG) rooms, hostels and co-living spaces across India. Compare rent, food, amenities and reviews, then chat with owners directly — zero brokerage.",
+  applicationName: "PGConnect",
   keywords: [
-    "paying guest",
-    "pg accommodation",
-    "pg rooms",
-    "student housing",
-    "affordable housing",
     "pg near me",
-    "pg in India",
-    "rental rooms",
-    "hostel alternatives",
+    "paying guest",
+    "pg for boys",
+    "pg for girls",
+    "co-living",
+    "hostel",
+    "pg with food",
+    "rooms for rent",
   ],
-
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "/",
     siteName: "PGConnect",
-    title: "PGConnect - Your Trusted Paying Guest Accommodation Platform",
-    description:
-      "Find the perfect PG room in minutes across major Indian cities",
-    images: [
-      {
-        url: "/og-image-pg.jpg",
-        width: 1200,
-        height: 630,
-        alt: "PGConnect - Find Paying Guest Accommodations",
-      },
-    ],
+    url: "/",
   },
-
-  // Twitter Card Metadata
-  twitter: {
-    card: "summary_large_image",
-    title: "PGConnect - Discover PG Rooms",
-    description:
-      "Easy and quick PG accommodation search for students and professionals",
-    images: ["/twitter-card-pg.jpg"],
-  },
-
-  // Robots and Indexing
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
-
-  // Verification for Search Consoles
-  verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
-  },
-
-  // Alternate language versions
-  alternates: {
-    canonical: "/",
-    languages: {
-      "en-IN": "/",
-    },
-  },
-
-  // Icons and Favicons
-  icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-    ],
-    apple: [{ url: "/apple-touch-icon.png" }],
-  },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true },
+  verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION },
+  alternates: { canonical: "/" },
 };
 
-// Viewport configuration
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e1416" },
+  ],
 };
 
-// Structured Data Generation
-function generateStructuredData() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "PGConnect",
-    url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.pgconnect.com",
-    description: "Connecting paying guest seekers with verified accommodations",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${
-        process.env.NEXT_PUBLIC_SITE_URL || "https://www.pgconnect.com"
-      }/search?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
-  };
-}
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "PGConnect",
+  url: siteUrl,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${siteUrl}/pgs?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
+};
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const structuredData = generateStructuredData();
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
+  const tree = (
+    <AuthProvider>
+      <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+    </AuthProvider>
+  );
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
+    <html lang="en-IN" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
-          }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
-        {/* Add Razorpay script */}
-        <Script
-          src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="beforeInteractive"
-        />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased font-inter scroll-smooth`}
-      >
-        <StoreProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <Toaster />
-
-            <ClientProvider>
-              <GoogleOAuthProvider
-                clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
-              >
-                <TooltipProvider>{children}</TooltipProvider>
-              </GoogleOAuthProvider>
-            </ClientProvider>
-          </ThemeProvider>
-        </StoreProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          {googleClientId ? <GoogleOAuthProvider clientId={googleClientId}>{tree}</GoogleOAuthProvider> : tree}
+          <Toaster richColors closeButton position="top-center" />
+        </ThemeProvider>
       </body>
     </html>
   );
