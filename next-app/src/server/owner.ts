@@ -177,8 +177,11 @@ export async function getEditableListing(user: AuthUser, pgId: string) {
   return toEditableListing(await getManagedListing(user, pgId));
 }
 
-function upgradeMessage(limit: number) {
-  return `Your current plan allows ${limit} active listing${limit === 1 ? "" : "s"}. Upgrade your plan on the Plans & billing page to add more.`;
+function upgradeMessage(limit: number, includesPaused = false) {
+  const plural = limit === 1 ? "" : "s";
+  return includesPaused
+    ? `Your current plan allows ${limit} listing${plural} (paused listings count too). Upgrade your plan or delete a listing you no longer need.`
+    : `Your current plan allows ${limit} live listing${plural}. Pause another listing or upgrade your plan to make this one live.`;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -254,7 +257,7 @@ export async function createListing(user: AuthUser, form: FormData) {
 
   const limit = PLANS[user.membership].listingLimit;
   if (!user.isAdmin && (await countOwnerListings(user.id)) >= limit) {
-    throw forbidden(upgradeMessage(limit));
+    throw forbidden(upgradeMessage(limit, true));
   }
 
   enforceRateLimit(`pg-post:${user.id}`, 10, 60 * 60 * 1000);

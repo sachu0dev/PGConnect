@@ -360,7 +360,7 @@ export function MembershipPlans() {
                     variant={plan.highlighted ? "default" : "secondary"}
                     onClick={() => void subscribe(id as PaidPlan)}
                     loading={busyPlan === id}
-                    disabled={busyPlan !== null && busyPlan !== id}
+                    disabled={status === "loading" || (busyPlan !== null && busyPlan !== id)}
                   >
                     {status === "authenticated" ? `Upgrade to ${plan.name}` : `Log in to choose ${plan.name}`}
                   </Button>

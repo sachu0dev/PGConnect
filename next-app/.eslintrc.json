@@ -19,6 +19,7 @@
     "src/components/layout/**",
     "src/components/ui/sidebar.tsx",
     "src/components/ui/number-ticker.tsx",
+    "src/app/providers/**",
     "email/**"
   ]
 }

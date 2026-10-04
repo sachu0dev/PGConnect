@@ -10,6 +10,9 @@ import { LISTING_LIMITS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { MAX_IMAGE_MB, prepareListingImages } from "./image-utils";
 
+let localId = 0;
+const nextLocalId = () => `local-${Date.now()}-${(localId += 1)}`;
+
 type GridItem = { key: string; src: string; local?: boolean };
 
 function move<T>(list: T[], from: number, to: number): T[] {
@@ -240,7 +243,7 @@ export function LocalPhotoPicker({
     const { files: ready, errors } = await prepareListingImages(accepted);
     setPreparing(false);
     errors.forEach((msg) => toast.error(msg));
-    const added = ready.map((file) => ({ id: crypto.randomUUID(), file, url: URL.createObjectURL(file) }));
+    const added = ready.map((file) => ({ id: nextLocalId(), file, url: URL.createObjectURL(file) }));
     onChange([...latest.current, ...added]);
   };
 

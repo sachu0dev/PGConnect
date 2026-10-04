@@ -62,10 +62,9 @@ function CountBadge({ count, className }: { count: number; className?: string })
   );
 }
 
-function DashboardNav({ variant }: { variant: "desktop" | "mobile" }) {
+function DashboardNav({ variant, unread }: { variant: "desktop" | "mobile"; unread: number }) {
   const pathname = usePathname();
   const { overview } = useDashboard();
-  const unread = useUnreadCount();
   const activeRef = useRef<HTMLAnchorElement | null>(null);
 
   useEffect(() => {
@@ -191,6 +190,7 @@ function ShellSkeleton() {
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { user, ready } = useRequireAuth();
+  const unread = useUnreadCount();
   const isOwner = Boolean(user && (user.isOwner || user.isAdmin));
 
   return (
@@ -202,12 +202,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <>
               <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start">
                 <OwnerSummary />
-                <DashboardNav variant="desktop" />
+                <DashboardNav variant="desktop" unread={unread} />
               </aside>
               <div className="pb-2 lg:hidden">
                 <OwnerSummary compact />
               </div>
-              <DashboardNav variant="mobile" />
+              <DashboardNav variant="mobile" unread={unread} />
               <main id="main" className="min-w-0 pt-4 lg:pt-0">
                 {children}
               </main>

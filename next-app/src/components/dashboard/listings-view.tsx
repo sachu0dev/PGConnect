@@ -60,7 +60,7 @@ function ListingRow({
       <div className="flex flex-col sm:flex-row">
         <Link
           href={`/dashboard/pgs/${pg.id}`}
-          className="relative aspect-[16/9] w-full shrink-0 bg-muted sm:aspect-auto sm:h-auto sm:w-48"
+          className="relative block aspect-[16/9] w-full shrink-0 bg-muted sm:aspect-auto sm:h-auto sm:w-48"
           aria-label={`Edit ${pg.name}`}
         >
           {pg.image ? (

@@ -76,6 +76,9 @@ export const profileSchema = z.object({
 const coerceNumber = (schema: z.ZodNumber) =>
   z.preprocess((v) => (v === "" || v === null || v === undefined ? undefined : Number(v)), schema);
 
+const coerceNumberOr = (schema: z.ZodNumber, fallback: number) =>
+  z.preprocess((v) => (v === "" || v === null || v === undefined ? fallback : Number(v)), schema);
+
 const coerceOptionalNumber = (schema: z.ZodNumber) =>
   z.preprocess(
     (v) => (v === "" || v === null || v === undefined ? null : Number(v)),
@@ -120,9 +123,9 @@ export const listingBaseSchema = z.object({
     rentPerMonth: coerceNumber(
       z.number({ invalid_type_error: "Rent is required" }).int().min(500, "Rent looks too low").max(500000)
     ),
-    deposit: coerceNumber(z.number().int().min(0).max(1000000)).default(0),
+    deposit: coerceNumberOr(z.number().int().min(0).max(1000000), 0),
     capacity: coerceNumber(z.number().int().min(1, "Add at least 1 bed").max(2000)),
-    capacityCount: coerceNumber(z.number().int().min(0).max(2000)).default(0),
+    capacityCount: coerceNumberOr(z.number().int().min(0).max(2000), 0),
     gender: z.enum(["MALE", "FEMALE", "ANY"]),
     sharingTypes: coerceArray(z.coerce.number().int().min(1).max(4))
       .refine((v) => v.length > 0, "Select at least one sharing type")
