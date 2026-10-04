@@ -1,219 +1,62 @@
-import { Server, Socket } from "socket.io";
-import http from "http";
-import { PrismaClient } from "@prisma/client";
-import { verifyAccessToken } from "./lib/jwt";
-import { v4 } from "uuid";
-// import winston from "winston";
+import http from "node:http";
+import { Server } from "socket.io";
+import { config } from "./config";
+import { createRequestHandler } from "./http";
+import { logger } from "./logger";
+import { prisma } from "./prisma";
+import { registerSocketHandlers } from "./sockets";
 
-/*
-const logger = winston.createLogger({
-  level: "info",
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.simple(),
-    }),
-    new winston.transports.File({ filename: "server.log" }),
-  ],
-});
-*/
+let io: Server | null = null;
 
-const PORT = process.env.PORT || 4000;
+const server = http.createServer(createRequestHandler(() => io));
+server.requestTimeout = 10_000;
+server.headersTimeout = 10_000;
 
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("Socket.IO server is running\n");
+io = new Server(server, {
+  serveClient: false,
+  cors: { origin: [...config.clientOrigins], credentials: true, methods: ["GET", "POST"] },
+  maxHttpBufferSize: config.maxHttpBufferSize,
+  pingTimeout: 20_000,
+  pingInterval: 25_000,
+  connectTimeout: 10_000,
 });
 
-const prisma = new PrismaClient({
-  log: [
-    { emit: "event", level: "query" },
-    { emit: "event", level: "error" },
-    { emit: "event", level: "info" },
-    { emit: "event", level: "warn" },
-  ],
+registerSocketHandlers(io);
+
+server.listen(config.port, () => {
+  logger.info("socket server listening", {
+    port: config.port,
+    origins: config.clientOrigins,
+    internalEmit: Boolean(config.internalSecret),
+  });
+  if (!config.internalSecret) {
+    logger.warn("SOCKET_INTERNAL_SECRET is not set; /internal/emit will reject every request");
+  }
 });
 
-/*
-prisma.$on("error", (e) => logger.error(e));
-prisma.$on("warn", (e) => logger.warn(e));
-*/
-
-interface AuthenticatedSocket extends Socket {
-  data: {
-    user?: {
-      id: string;
-      username: string;
-    };
-  };
+let shuttingDown = false;
+function shutdown(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logger.info("shutting down", { signal });
+  const force = setTimeout(() => {
+    logger.error("forced shutdown after timeout");
+    process.exit(1);
+  }, 10_000);
+  force.unref();
+  // io.close() disconnects every socket and closes the underlying HTTP server.
+  io?.close(() => {
+    prisma
+      .$disconnect()
+      .catch((error: unknown) => logger.error("prisma disconnect failed", { error }))
+      .finally(() => process.exit(0));
+  });
 }
 
-// Socket.IO server configuration
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:3000",
-    methods: ["GET", "POST"],
-  },
-  pingTimeout: 60000, // Increased timeout for better connection stability
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("unhandledRejection", (reason) => logger.error("unhandled rejection", { error: reason }));
+process.on("uncaughtException", (error) => {
+  logger.error("uncaught exception", { error });
+  shutdown("uncaughtException");
 });
-
-// Authentication middleware
-io.use(async (socket: AuthenticatedSocket, next) => {
-  const token = socket.handshake.auth.token;
-
-  if (!token) {
-    // logger.warn("Connection attempt without token");
-    return next(new Error("Authentication error: Token missing"));
-  }
-
-  try {
-    const payload = verifyAccessToken(token);
-
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: {
-        id: true,
-        username: true,
-      },
-    });
-
-    if (!user) {
-      /*
-      logger.warn(
-        `Authentication failed: User not found for ID ${payload.userId}`
-      );
-      */
-      return next(new Error("Authentication error: User not found"));
-    }
-
-    socket.data.user = user;
-    next();
-  } catch (err) {
-    // logger.error("Token verification failed", { error: err });
-    return next(new Error("Authentication error: Invalid token"));
-  }
-});
-
-// Connection handler
-io.on("connection", (socket: AuthenticatedSocket) => {
-  const user = socket.data.user;
-  // logger.info(`Client connected: ${socket.id}`, { username: user?.username });
-
-  // Join chat room handler
-  socket.on("JOIN_CHAT", ({ chatId }: { chatId: string }) => {
-    if (!chatId) {
-      /*
-      logger.warn("Attempted to join chat with invalid ID", {
-        socketId: socket.id,
-      });
-      */
-      return;
-    }
-
-    socket.join(chatId);
-    /*
-    logger.info(`User joined chat room`, {
-      username: user?.username,
-      chatId: chatId,
-    });
-    */
-  });
-
-  // New message handler with robust error handling
-  socket.on(
-    "NEW_MESSAGE",
-    async ({ chatId, message }: { chatId: string; message: string }) => {
-      // Validate input
-      if (!chatId || !message || message.trim() === "") {
-        /*
-        logger.warn("Received invalid message", {
-          username: user?.username,
-          chatId,
-          messageLength: message?.length,
-        });
-        */
-        return;
-      }
-
-      const messageForRealTime = {
-        id: v4(),
-        text: message,
-        sender: {
-          id: user?.id,
-          username: user?.username,
-        },
-        chatId,
-        createdAt: new Date().toISOString(),
-      };
-
-      try {
-        if (!user?.id) {
-          // logger.warn("Cannot create message: User ID is undefined");
-          return;
-        }
-        io.to(chatId).emit("message", { message: messageForRealTime });
-
-        // Persist message to database
-        await prisma.message.create({
-          data: {
-            chatRoomId: chatId,
-            senderId: user?.id,
-            text: message,
-          },
-        });
-
-        /*
-        logger.info("Message processed", {
-          username: user?.username,
-          chatId,
-          messageLength: message.length,
-        });
-        */
-      } catch (error) {
-        /*
-        logger.error("Failed to process message", {
-          error,
-          username: user?.username,
-          chatId,
-        });
-        */
-      }
-    }
-  );
-
-  // Disconnect handler
-  socket.on("disconnect", () => {
-    /*
-    logger.info(`Client disconnected`, {
-      socketId: socket.id,
-      username: user?.username,
-    });
-    */
-  });
-});
-
-// Server startup
-server.listen(PORT, () => {
-  // logger.info(`Server running on http://localhost:${PORT}`);
-});
-
-// Graceful shutdown
-const gracefulShutdown = async () => {
-  try {
-    await prisma.$disconnect();
-    // logger.info("Prisma client disconnected");
-    server.close(() => {
-      // logger.info("HTTP server closed");
-      process.exit(0);
-    });
-  } catch (err) {
-    // logger.error("Error during shutdown", err);
-    process.exit(1);
-  }
-};
-
-process.on("SIGINT", gracefulShutdown);
-process.on("SIGTERM", gracefulShutdown);

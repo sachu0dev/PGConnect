@@ -20,7 +20,7 @@ export async function getChatForParticipant(chatId: string, userId: string) {
       id: true,
       userId: true,
       pgId: true,
-      user: { select: { id: true, username: true } },
+      user: { select: { id: true, username: true, isBanned: true } },
       pg: {
         select: {
           id: true,
@@ -30,7 +30,8 @@ export async function getChatForParticipant(chatId: string, userId: string) {
           rentPerMonth: true,
           images: true,
           ownerId: true,
-          owner: { select: { id: true, username: true } },
+          status: true,
+          owner: { select: { id: true, username: true, isBanned: true } },
         },
       },
     },
@@ -84,7 +85,13 @@ export async function createMessage(chatId: string, senderId: string, recipientI
     createdAt: message.createdAt.toISOString(),
     status: message.status,
   };
-  await emitRealtime("message:new", [`chat:${chatId}`, `user:${recipientId}`], payload);
+  // The sender's own user room lets their other tabs/devices update too
+  // (Socket.IO de-duplicates sockets that are in several of these rooms).
+  await emitRealtime(
+    "message:new",
+    [`chat:${chatId}`, `user:${recipientId}`, `user:${senderId}`],
+    payload
+  );
   return payload;
 }
 

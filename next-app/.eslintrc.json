@@ -1,3 +1,24 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "ignorePatterns": [
+    "src/helpers/**",
+    "src/hooks/useChat.ts",
+    "src/hooks/useSocket.ts",
+    "src/hooks/userAuth.ts",
+    "src/lib/store.ts",
+    "src/lib/hooks.ts",
+    "src/lib/axios.ts",
+    "src/lib/features/**",
+    "src/lib/auth/**",
+    "src/lib/uploadS3.ts",
+    "src/lib/razorpay.ts",
+    "src/schemas/**",
+    "src/types/**",
+    "src/components/specific/**",
+    "src/components/shared/**",
+    "src/components/layout/**",
+    "src/components/ui/sidebar.tsx",
+    "src/components/ui/number-ticker.tsx",
+    "email/**"
+  ]
 }

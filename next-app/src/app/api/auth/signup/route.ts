@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { registerSchema } from "@/lib/validation";
 import { ApiError, conflict, getClientIp, ok, readJson, route } from "@/server/http";
-import { enforceRateLimit } from "@/server/rate-limit";
+import { checkRateLimit, enforceRateLimit } from "@/server/rate-limit";
 import { MINUTE, findUsernameOwner, hashPassword, issueCode } from "../_lib/helpers";
 
 /**
@@ -47,6 +47,8 @@ export const POST = route(async (req: NextRequest) => {
       });
 
   const sent = await issueCode(user, "verify");
+  // Counts towards the resend cooldown so an immediate login doesn't email another code.
+  checkRateLimit(`resend:email:min:${user.email}`, 1, MINUTE);
   if (!sent.success) {
     throw new ApiError(
       503,

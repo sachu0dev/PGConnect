@@ -1,58 +1,26 @@
+import { route, ok, notFound } from "@/server/http";
+import { getListingDetail } from "@/server/listings";
+import { optionalUser } from "@/server/auth/guard";
 import prisma from "@/lib/prisma";
-import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params;
-  try {
-    const pgData = await prisma.pg.findUnique({
-      where: {
-        id: id,
-      },
-      select: {
-        id: true,
-        name: true,
-        city: true,
-        address: true,
-        coordinates: true,
-        rentPerMonth: true,
-        isDummy: true,
-        bhk: true,
-        gender: true,
-        capacityCount: true,
-        createdAt: true,
-        capacity: true,
-        images: true,
-        description: true,
-        owner: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            phoneNumber: true,
-          },
-        },
-      },
-    });
+/**
+ * Public listing detail. Only ACTIVE listings are public; the owner (and
+ * admins) can also load their PAUSED / BLOCKED listing.
+ */
+export const GET = route<{ id: string }>(async (req, { params }) => {
+  const { id } = await params;
+  if (id.length > 64) throw notFound("PG not found");
 
-    if (!pgData) {
-      return NextResponse.json(
-        { message: "Data not found", success: false },
-        { status: 404 }
-      );
-    }
+  const [pg, ownerBanned] = await Promise.all([
+    getListingDetail(id),
+    prisma.pg.count({ where: { id, owner: { isBanned: true } } }),
+  ]);
+  if (!pg) throw notFound("PG not found");
 
-    return NextResponse.json(
-      { message: "successfully fetched data", data: pgData, success: true },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.log(error);
-    return NextResponse.json(
-      { error: "Internal server error", success: false },
-      { status: 500 }
-    );
+  if (pg.status !== "ACTIVE" || ownerBanned > 0) {
+    const viewer = await optionalUser(req);
+    const allowed = viewer && (viewer.id === pg.owner.id || viewer.isAdmin);
+    if (!allowed) throw notFound("PG not found");
   }
-}
+  return ok(pg);
+});

@@ -7,6 +7,7 @@ export type Enquiry = {
   createdAt: string;
   pg: {
     id: string;
+    ownerId: string;
     name: string;
     city: string;
     locality: string | null;

@@ -1,27 +1,10 @@
-import prisma from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { route, ok } from "@/server/http";
+import { getPlatformStats } from "@/server/listings";
 
-export async function GET() {
-  try {
-    const totalCities = await prisma.city.count();
-    const totalPGs = await prisma.pg.count();
-    const beds = await prisma.pg.aggregate({
-      _sum: {
-        capacity: true,
-      },
-    });
-
-    const totalBeds = beds._sum.capacity;
-
-    return NextResponse.json(
-      { totalCities, totalPGs, totalBeds, success: true },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.log(error);
-    return NextResponse.json(
-      { error: "Internal server error", success: false },
-      { status: 500 }
-    );
-  }
-}
+/** Platform-wide live numbers: active listings, cities and beds. */
+export const GET = route(async () => {
+  const stats = await getPlatformStats();
+  return ok(stats, {
+    headers: { "cache-control": "public, s-maxage=300, stale-while-revalidate=900" },
+  });
+});

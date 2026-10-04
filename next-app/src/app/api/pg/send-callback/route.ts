@@ -1,110 +1,29 @@
-import { authenticateRequest } from "@/helpers/AuthenticateUser";
-import { sendCallbackRequest } from "@/helpers/sendCallbackRequest";
-import prisma from "@/lib/prisma";
-import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { route, ok, readJson } from "@/server/http";
+import { requireUser } from "@/server/auth/guard";
+import { submitLead } from "@/server/leads";
+import { leadSchema } from "@/lib/validation";
 
-export async function POST(req: NextRequest) {
-  try {
-    const authResult = await authenticateRequest(req);
-    if (authResult instanceof NextResponse) {
-      return authResult;
-    }
-    const userId = authResult;
-    const body = await req.json();
-    const { PhoneNumber, pgId } = body;
+const legacyBodySchema = z.object({
+  pgId: z.string().trim().min(1, "pgId is required").max(64),
+  PhoneNumber: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  name: z.string().optional(),
+  message: z.string().optional(),
+});
 
-    if (!PhoneNumber || !pgId) {
-      return NextResponse.json(
-        { error: "PhoneNumber and pgId are required", success: false },
-        { status: 400 }
-      );
-    }
-
-    const pgOwnerDetails = await prisma.pg.findUnique({
-      where: { id: pgId },
-      select: {
-        name: true,
-        owner: {
-          select: { email: true, membership: true },
-        },
-      },
-    });
-
-    if (!pgOwnerDetails) {
-      return NextResponse.json(
-        { error: "PG not found", success: false },
-        { status: 404 }
-      );
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { username: true },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found", success: false },
-        { status: 404 }
-      );
-    }
-
-    const existingCallbackRequest = await prisma.callbackRequest.findFirst({
-      where: {
-        pgId: pgId,
-        userId: userId,
-      },
-    });
-
-    if (existingCallbackRequest) {
-      return NextResponse.json(
-        { error: "Callback request already sent", success: false },
-        { status: 400 }
-      );
-    }
-
-    await prisma.callbackRequest.create({
-      data: {
-        phoneNumber: PhoneNumber,
-        pgId: pgId,
-        userId: userId,
-      },
-    });
-
-    console.log("Callback:", pgOwnerDetails.owner);
-
-    if (pgOwnerDetails.owner.membership !== "FREE") {
-      const emailResponse = await sendCallbackRequest({
-        PhoneNumber,
-        pgName: pgOwnerDetails.name,
-        username: user.username,
-        email: pgOwnerDetails.owner.email,
-      });
-
-      if (!emailResponse.success) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: emailResponse.message,
-          },
-          { status: 500 }
-        );
-      }
-    }
-
-    return NextResponse.json(
-      {
-        message: "Callback request sent successfully, cannot be sent again",
-        success: true,
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.log("Error processing callback request:", error);
-
-    return NextResponse.json(
-      { error: "Internal server error", success: false },
-      { status: 500 }
-    );
-  }
-}
+/**
+ * Legacy adapter kept for old clients. Prefer `POST /api/pg/[id]/leads`.
+ * Body: { pgId, PhoneNumber | phoneNumber, name?, message? }
+ */
+export const POST = route(async (req) => {
+  const user = await requireUser(req);
+  const body = legacyBodySchema.parse(await readJson(req));
+  const input = leadSchema.parse({
+    type: "CALLBACK",
+    name: body.name?.trim() || user.username,
+    phoneNumber: body.phoneNumber ?? body.PhoneNumber ?? "",
+    message: body.message,
+  });
+  return ok(await submitLead(user, body.pgId, input), 201);
+});

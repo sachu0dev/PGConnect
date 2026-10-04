@@ -1,134 +1,25 @@
-import { authenticateRequest } from "@/helpers/AuthenticateUser";
-import prisma from "@/lib/prisma";
-import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/server/auth/guard";
+import { ok, readJson, route } from "@/server/http";
+import { deleteListing, getEditableListing, updateListing } from "@/server/owner";
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params;
+export const dynamic = "force-dynamic";
 
-  const authResult = await authenticateRequest(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
-  }
+type Params = { id: string };
 
-  const userId = authResult;
+export const GET = route<Params>(async (req, { params }) => {
+  const user = await requireUser(req, { owner: true });
+  const { id } = await params;
+  return ok(await getEditableListing(user, id));
+});
 
-  try {
-    const pg = await prisma.pg.findUnique({
-      where: {
-        id: id,
-        ownerId: userId,
-      },
-      select: {
-        id: true,
-        name: true,
-        city: true,
-        contact: true,
-        address: true,
-        coordinates: true,
-        rentPerMonth: true,
-        isDummy: true,
-        bhk: true,
-        gender: true,
-        capacityCount: true,
-        createdAt: true,
-        capacity: true,
-        images: true,
-        description: true,
-        owner: {
-          select: {
-            id: true,
-            username: true,
-            Subscription: {
-              select: {
-                plan: true,
-                status: true,
-              },
-            },
-          },
-        },
-      },
-    });
+export const PATCH = route<Params>(async (req, { params }) => {
+  const user = await requireUser(req, { owner: true });
+  const { id } = await params;
+  return ok(await updateListing(user, id, await readJson(req)));
+});
 
-    const rawChatRooms = await prisma.chatRoom.findMany({
-      where: {
-        pgId: id,
-      },
-      select: {
-        id: true,
-        pgId: true,
-        user: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
-      },
-    });
-
-    const chatRooms = await Promise.all(
-      rawChatRooms.map(async (room) => ({
-        ...room,
-        messageCount: await prisma.message.count({
-          where: {
-            senderId: { not: userId },
-            chatRoomId: room.id,
-            status: "SENT",
-          },
-        }),
-      }))
-    );
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        pg,
-        chatRooms,
-      },
-    });
-  } catch (error) {
-    console.log("PG Search Error:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params;
-
-  const authResult = await authenticateRequest(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
-  }
-
-  const userId = authResult;
-
-  try {
-    await prisma.pg.delete({
-      where: {
-        id: id,
-        ownerId: userId,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        message: "PG deleted successfully",
-      },
-    });
-  } catch (error) {
-    console.log("Pg Delete Error:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+export const DELETE = route<Params>(async (req, { params }) => {
+  const user = await requireUser(req, { owner: true });
+  const { id } = await params;
+  return ok(await deleteListing(user, id));
+});

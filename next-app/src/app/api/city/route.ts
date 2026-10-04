@@ -1,38 +1,18 @@
-import prisma from "@/lib/prisma";
-import { NextRequest, NextResponse } from "next/server";
+import { route, ok } from "@/server/http";
+import { getCityCounts } from "@/server/listings";
+import { citySlug, titleCase } from "@/lib/format";
 
-export async function POST(req: NextRequest) {
-  try {
-    const { city } = await req.json();
-
-    const parsedCity = city.trim().toLowerCase();
-
-    const oldCity = await prisma.city.findUnique({
-      where: { name: parsedCity },
-    });
-
-    if (oldCity) {
-      return NextResponse.json(
-        { error: "City already exists", success: false },
-        { status: 404 }
-      );
-    }
-
-    await prisma.city.create({
-      data: {
-        name: parsedCity,
-      },
-    });
-
-    return NextResponse.json(
-      { success: true, message: "City added successfully" },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.log("Error validating city:", error);
-    return NextResponse.json(
-      { error: "Internal server error", success: false },
-      { status: 500 }
-    );
-  }
-}
+/** Cities that currently have active listings, most listings first. */
+export const GET = route(async () => {
+  const rows = await getCityCounts(100);
+  const cities = rows.map((r) => ({
+    city: r.city,
+    label: titleCase(r.city),
+    slug: citySlug(r.city),
+    count: r.count,
+  }));
+  return ok(
+    { cities },
+    { headers: { "cache-control": "public, s-maxage=300, stale-while-revalidate=600" } }
+  );
+});

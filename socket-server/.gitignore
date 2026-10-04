@@ -19,3 +19,5 @@ dist/
 nodemon-debug.log
 
 server.log
+
+!.env.example

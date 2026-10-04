@@ -1,66 +1,93 @@
-import { authenticateRequest } from "@/helpers/AuthenticateUser";
 import prisma from "@/lib/prisma";
-import { uploadAadhaarToS3 } from "@/lib/uploadS3";
-import { NextResponse } from "next/server";
+import { ownerVerificationSchema } from "@/lib/validation";
+import { requireUser } from "@/server/auth/guard";
+import { badRequest, conflict, ok, route } from "@/server/http";
+import { enforceRateLimit } from "@/server/rate-limit";
+import { deletePrivateDocument, uploadPrivateDocument } from "@/server/storage";
 
-export async function POST(req: Request) {
-  const formData = await req.formData();
-  const aadhaarNumber = formData.get("aadhaarNumber") as string;
-  const aadhaarImage = formData.get("aadhaarImage") as File;
+export const dynamic = "force-dynamic";
 
-  const authResult = await authenticateRequest(req);
-  if (authResult instanceof NextResponse) {
-    return authResult;
+const MAX_DOCUMENT_BYTES = 8 * 1024 * 1024;
+
+const verificationSelect = {
+  status: true,
+  documentType: true,
+  documentLast4: true,
+  reviewNote: true,
+  createdAt: true,
+  reviewedAt: true,
+} as const;
+
+/** My owner verification request, or null. */
+export const GET = route(async (req) => {
+  const user = await requireUser(req);
+  const verification = await prisma.ownerVerification.findUnique({
+    where: { userId: user.id },
+    select: verificationSelect,
+  });
+  return ok(verification);
+});
+
+/**
+ * Submit (or resubmit after rejection) an ID document for the "Verified owner"
+ * badge. multipart: fullName, documentType, documentLast4, document (file).
+ * Only the last 4 characters of the document number are ever accepted/stored.
+ */
+export const POST = route(async (req) => {
+  const user = await requireUser(req);
+  enforceRateLimit(`verify-owner:${user.id}`, 5, 60 * 60 * 1000);
+
+  const form = await req.formData().catch(() => {
+    throw badRequest("Send the verification form as multipart form data");
+  });
+  const fields = ownerVerificationSchema.parse({
+    fullName: form.get("fullName") ?? undefined,
+    documentType: form.get("documentType") ?? undefined,
+    documentLast4: form.get("documentLast4") ?? undefined,
+  });
+  const document = form.get("document");
+  if (!(document instanceof File) || document.size === 0) {
+    throw badRequest("Upload a photo or PDF of your document");
   }
+  if (document.size > MAX_DOCUMENT_BYTES) throw badRequest("The document must be under 8 MB");
 
-  const userId = authResult;
-
-  console.log("User ID:", userId);
-  console.log("Aadhaar Number:", aadhaarNumber);
-  console.log("Aadhaar Image:", aadhaarImage);
-
-  if (!aadhaarNumber || !aadhaarImage) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: "Aadhaar number and verification ID are required",
-      }),
-      { status: 400 }
-    );
+  const existing = await prisma.ownerVerification.findUnique({
+    where: { userId: user.id },
+    select: { status: true, documentKey: true },
+  });
+  if (existing?.status === "PENDING") {
+    throw conflict("Your verification is already under review. We'll email you once it's done.");
   }
+  if (existing?.status === "APPROVED") throw conflict("You're already a verified owner.");
 
+  const documentKey = await uploadPrivateDocument(document, user.id);
+  const data = {
+    fullName: fields.fullName,
+    documentType: fields.documentType,
+    documentLast4: fields.documentLast4.toUpperCase(),
+    documentKey,
+    status: "PENDING" as const,
+    reviewNote: null,
+    reviewedAt: null,
+    createdAt: new Date(),
+  };
+
+  let verification;
   try {
-    const imageUrl = await uploadAadhaarToS3(aadhaarImage, userId);
-
-    const updateUser = await prisma.user.update({
-      where: { id: userId },
-      data: { aadhar: aadhaarNumber, aadharImage: imageUrl, isOwner: true },
-    });
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Aadhaar verification successful",
-        data: updateUser,
+    [verification] = await prisma.$transaction([
+      prisma.ownerVerification.upsert({
+        where: { userId: user.id },
+        create: { userId: user.id, ...data },
+        update: data,
+        select: verificationSelect,
       }),
-      { status: 200 }
-    );
-  } catch (error: unknown) {
-    console.log("Error during Aadhaar verification:", error);
-    if (error instanceof Error) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Error during verification",
-          error: error.message,
-        }),
-        { status: 500 }
-      );
-    }
-
-    return new Response(
-      JSON.stringify({ success: false, message: "Unexpected error occurred" }),
-      { status: 500 }
-    );
+      prisma.user.update({ where: { id: user.id }, data: { isOwner: true } }),
+    ]);
+  } catch (error) {
+    await deletePrivateDocument(documentKey);
+    throw error;
   }
-}
+
+  if (existing?.documentKey) await deletePrivateDocument(existing.documentKey);
+  return ok(verification, 201);
+});

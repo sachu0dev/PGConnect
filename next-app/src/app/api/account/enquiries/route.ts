@@ -20,6 +20,7 @@ export const GET = route(async (req: NextRequest) => {
       pg: {
         select: {
           id: true,
+          ownerId: true,
           name: true,
           city: true,
           locality: true,
@@ -42,6 +43,7 @@ export const GET = route(async (req: NextRequest) => {
       createdAt: lead.createdAt.toISOString(),
       pg: {
         id: lead.pg.id,
+        ownerId: lead.pg.ownerId,
         name: lead.pg.name,
         city: lead.pg.city,
         locality: lead.pg.locality,
