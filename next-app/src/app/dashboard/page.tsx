@@ -1,19 +1,8 @@
-"use client";
-import { useAppSelector } from "@/lib/hooks";
-import { useEffect } from "react";
+import type { Metadata } from "next";
+import { OverviewView } from "@/components/dashboard/overview-view";
 
-const Page = () => {
-  const { userData } = useAppSelector((state) => state.user);
-  useEffect(() => {
-    if (userData?.isOwner === undefined) return;
+export const metadata: Metadata = { title: "Owner dashboard", robots: { index: false, follow: false } };
 
-    if (userData?.isOwner) {
-      window.location.href = "/dashboard/pgs";
-    } else {
-      window.location.href = "/dashboard/verify-owner";
-    }
-  }, [userData]);
-  return <div>page</div>;
-};
-
-export default Page;
+export default function DashboardPage() {
+  return <OverviewView />;
+}

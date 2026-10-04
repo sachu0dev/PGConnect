@@ -1,14 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
 import "./globals.css";
 
 /** Last-resort boundary when the root layout itself fails. Keep it dependency-free. */
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
   return (
     <html lang="en-IN">
       <body className="bg-background font-sans text-foreground antialiased">

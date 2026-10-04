@@ -54,7 +54,7 @@ function Lightbox({
         <Carousel setApi={setApi} opts={{ startIndex, loop: images.length > 1 }} className="w-full">
           <CarouselContent>
             {images.map((src, i) => (
-              <CarouselItem key={src}>
+              <CarouselItem key={`${i}:${src}`}>
                 <div className="relative aspect-[4/3] w-full sm:aspect-[16/10]">
                   <Image
                     src={src}
@@ -76,7 +76,7 @@ function Lightbox({
             <div className="flex gap-1.5 overflow-x-auto py-1">
               {images.map((src, i) => (
                 <button
-                  key={src}
+                  key={`${i}:${src}`}
                   type="button"
                   onClick={() => api?.scrollTo(i)}
                   aria-label={`Show photo ${i + 1}`}
@@ -132,7 +132,7 @@ export function Gallery({ images, name }: { images: string[]; name: string }) {
         <Carousel setApi={setApi} opts={{ loop: images.length > 1 }} aria-label={`${name} photos`}>
           <CarouselContent className="ml-0">
             {images.map((src, i) => (
-              <CarouselItem key={src} className="pl-0">
+              <CarouselItem key={`${i}:${src}`} className="pl-0">
                 <button
                   type="button"
                   onClick={() => openAt(i)}
@@ -184,7 +184,7 @@ export function Gallery({ images, name }: { images: string[]; name: string }) {
         </button>
         {tiles.map((src, i) => (
           <button
-            key={src}
+            key={`${i}:${src}`}
             type="button"
             onClick={() => openAt(i + 1)}
             className={cn(

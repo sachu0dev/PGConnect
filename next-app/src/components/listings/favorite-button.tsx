@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +25,9 @@ export function FavoriteButton({
   const router = useRouter();
   const [saved, setSaved] = useState(initial);
   const [pending, setPending] = useState(false);
+
+  // Keep in sync when the caller learns the real state later (e.g. after /me loads).
+  useEffect(() => setSaved(initial), [initial]);
 
   const toggle = async (event: React.MouseEvent) => {
     event.preventDefault();

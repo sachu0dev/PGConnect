@@ -32,6 +32,8 @@ export function InboxList({ activeId }: { activeId: string | null }) {
   const connected = useRealtimeConnected();
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadedCount = useRef(PAGE_SIZE);
+  const activeRef = useRef(activeId);
+  activeRef.current = activeId;
 
   /** Reloads the first page(s), keeping however many rows are already shown. */
   const refresh = useCallback(async () => {
@@ -39,7 +41,8 @@ export function InboxList({ activeId }: { activeId: string | null }) {
       const page = await api<ChatInboxPage>("/api/chats", {
         query: { limit: Math.min(50, Math.max(PAGE_SIZE, loadedCount.current)) },
       });
-      setItems(page.items);
+      // The open conversation is being read right now: never show it as unread.
+      setItems(page.items.map((i) => (i.id === activeRef.current && i.unread ? { ...i, unread: 0 } : i)));
       setNextCursor(page.nextCursor);
       setError(null);
     } catch (err) {

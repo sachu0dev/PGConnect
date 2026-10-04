@@ -1,17 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 import { RefreshCw, TriangleAlert } from "lucide-react";
 import { Logo } from "@/components/site/logo";
 import { Button } from "@/components/ui/button";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
   return (
     <main id="main" className="flex min-h-dvh flex-col items-center justify-center px-4 py-16 text-center">
       <Logo className="mb-10" />
